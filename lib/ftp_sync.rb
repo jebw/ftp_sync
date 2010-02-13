@@ -14,7 +14,7 @@ class FtpSync
     @recursion_level = 0
   end
   
-  def pull_all(localpath, remotepath)
+  def pull_dir(localpath, remotepath)
     connect!
     @recursion_level += 1
     
@@ -37,15 +37,29 @@ class FtpSync
     recurse.each do |paths|
       localdir, remotedir = paths
       Dir.mkdir(localdir) unless File.exist?(localdir)
-      pull_all(localdir, remotedir)
+      pull_dir(localdir, remotedir)
     end
     
     @recursion_level -= 1
     close! if @recusion_level == 0
   end
   
-  def push(localpath, remotepath)
-    #should recursively push all files up
+  def push_dir(localpath, remotepath)
+    connect!
+    
+    Dir.glob(File.join(localpath, '**', '*')) do |f|
+      f.gsub!("#{localpath}/", '')
+      local = File.join localpath, f
+      remote = "#{remotepath}/#{f}"
+      
+      if File.directory?(local)
+        @connection.mkdir remote rescue Net::FTPPermError
+      elsif File.file?(local)
+        @connection.put local, remote
+      end
+    end
+    
+    close!
   end
   
   def pull_files(localpath, remotepath, filelist)
