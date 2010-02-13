@@ -10,9 +10,13 @@ class FtpSync
     @password = password
     @connection = nil
     @ignore = ignore
+    @recursion_level = 0
   end
   
   def pull_all(localpath, remotepath)
+    connect!
+    @recursion_level += 1
+    
     tocopy = []
     recurse = []
     @connection.list(remotepath) do |entry|
@@ -31,9 +35,12 @@ class FtpSync
     
     recurse.each do |paths|
       localdir, remotedir = paths
-      Dir.mkdir(localdir) if not File.exist?(localdir)
+      Dir.mkdir(localdir) unless File.exist?(localdir)
       pull_all(localdir, remotedir)
     end
+    
+    @recursion_level -= 1
+    close! if @recusion_level == 0
   end
   
   def push(localpath, remotepath)
@@ -41,14 +48,18 @@ class FtpSync
   end
   
   def pull_files(localpath, remotepath, filelist)
-    #should pull a list of files down
+    connect!
+    filelist.each do |f|
+      @connection.get "#{remotepath}/#{f}", File.join(localpath, f)
+    end
+    close!
   end
   
   def push_files(localpath, remotepath, filelist)
     #should push a list of files up
   end
   
-#  private
+  private
     def connect!
       @connection = Net::FTP.new(@server)
       @connection.login(@user, @password)
