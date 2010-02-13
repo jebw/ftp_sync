@@ -1,5 +1,6 @@
 require 'net/ftp'
 require 'net/ftp/list'
+require 'FileUtils'
 
 class FtpSync
   attr_reader :connection
@@ -50,13 +51,22 @@ class FtpSync
   def pull_files(localpath, remotepath, filelist)
     connect!
     filelist.each do |f|
+      FileUtils.mkdir_p File.join(localpath, File.dirname(f))
       @connection.get "#{remotepath}/#{f}", File.join(localpath, f)
     end
     close!
   end
   
   def push_files(localpath, remotepath, filelist)
-    #should push a list of files up
+    connect!
+    
+    remote_paths = filelist.map {|f| File.dirname(f) }.uniq
+    create_remote_paths(remotepath, remote_paths)
+    
+    filelist.each do |f|
+      @connection.put File.join(localpath, f), "#{remotepath}/#{f}"
+    end
+    close!
   end
   
   private
@@ -67,5 +77,15 @@ class FtpSync
   
     def close!
       @connection.close
+    end
+    
+    def create_remote_paths(base, pathlist)
+      pathlist.each do |remotepath|
+        parent = base
+        remotepath.split('/').each do |p|
+          parent = "#{parent}/#{p}"
+          @connection.mkdir(parent) rescue Net::FTPPermError
+        end
+      end
     end
 end
