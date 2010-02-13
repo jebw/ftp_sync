@@ -1,3 +1,4 @@
 FTP Sync
 * Add support for gitignores
 * Add optional verbose mode
+* Add handling files to ignore

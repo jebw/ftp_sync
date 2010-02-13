@@ -10,7 +10,8 @@ class FtpSync
     @user = user
     @password = password
     @connection = nil
-    @ignore = ignore
+    @ignore = ".git/\n"
+    @ignore << ignore if ignore
     @recursion_level = 0
   end
   
