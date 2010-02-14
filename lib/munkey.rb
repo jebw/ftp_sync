@@ -54,7 +54,7 @@ class Munkey
     end
   end
   
-  def create_branch(branch_name = 'ftp')
+  def create_branch(branch_name = 'munkey')
     Dir.chdir(@gitpath) do
       system("git branch #{branch_name}")
     end
