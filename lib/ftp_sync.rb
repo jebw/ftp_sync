@@ -3,7 +3,7 @@ require 'net/ftp/list'
 require 'FileUtils'
 
 class FtpSync
-  attr_reader :connection
+  attr_accessor :verbose
   
   def initialize(server, user, password, ignore = nil)
     @server = server
@@ -13,10 +13,11 @@ class FtpSync
     @ignore = ".git/\n"
     @ignore << ignore if ignore
     @recursion_level = 0
+    @verbose = false
   end
   
   def pull_dir(localpath, remotepath)
-    connect!
+    connect! unless @connection
     @recursion_level += 1
     
     tocopy = []
@@ -33,6 +34,7 @@ class FtpSync
     tocopy.each do |paths|
       localfile, remotefile = paths
       @connection.get(remotefile, localfile)
+      log "Pulled file #{remotefile}"
     end
     
     recurse.each do |paths|
@@ -42,7 +44,7 @@ class FtpSync
     end
     
     @recursion_level -= 1
-    close! if @recusion_level == 0
+    close! if @recursion_level == 0
   end
   
   def push_dir(localpath, remotepath)
@@ -55,8 +57,10 @@ class FtpSync
       
       if File.directory?(local)
         @connection.mkdir remote rescue Net::FTPPermError
+        log "Created Remote Directory #{local}"
       elsif File.file?(local)
         @connection.put local, remote
+        log "Pushed file #{remote}"
       end
     end
     
@@ -66,8 +70,10 @@ class FtpSync
   def pull_files(localpath, remotepath, filelist)
     connect!
     filelist.each do |f|
-      FileUtils.mkdir_p File.join(localpath, File.dirname(f))
+      localdir = File.join(localpath, File.dirname(f))
+      FileUtils.mkdir_p localdir unless File.exist?(localdir)
       @connection.get "#{remotepath}/#{f}", File.join(localpath, f)
+      log "Pulled file #{remotepath}/#{f}"
     end
     close!
   end
@@ -80,6 +86,7 @@ class FtpSync
     
     filelist.each do |f|
       @connection.put File.join(localpath, f), "#{remotepath}/#{f}"
+      log "Pushed file #{remotepath}/#{f}"
     end
     close!
   end
@@ -88,10 +95,12 @@ class FtpSync
     def connect!
       @connection = Net::FTP.new(@server)
       @connection.login(@user, @password)
+      log "Opened connection to #{@server}"
     end
   
     def close!
       @connection.close
+      log "Closed Connection to #{@server}"
     end
     
     def create_remote_paths(base, pathlist)
@@ -100,7 +109,12 @@ class FtpSync
         remotepath.split('/').each do |p|
           parent = "#{parent}/#{p}"
           @connection.mkdir(parent) rescue Net::FTPPermError
+          log "Creating Remote Directory #{parent}"
         end
       end
+    end
+    
+    def log(msg)
+      puts msg if @verbose
     end
 end
