@@ -1,8 +1,10 @@
 require 'uri'
 require 'ftp_sync'
 require 'YAML'
+require 'FileUtils'
 
 class Munkey
+  DEFAULT_BRANCH = 'munkey'
   
   class << self
     def clone(ftpsrc, repo_path, ignores = nil)
@@ -36,6 +38,15 @@ class Munkey
     @ftpdetails = YAML.load_file(munkey_file) if File.exist?(munkey_file)
   end
   
+  def pull
+    tmp_repo = clone_to_tmp
+    pull_ftp_files(tmp_repo)
+    commit_changes(tmp_repo)
+    push_into_base_repo(tmp_repo)
+    FileUtils.rm_rf(tmp_repo)
+    merge_foreign_changes
+  end
+  
   def save_ftp_details(ftp_uri)
     @ftpdetails = { :host => ftp_uri.host, :path => "/#{ftp_uri.path}", :user => ftp_uri.user, :password => ftp_uri.password }
     File.open File.join(@gitpath, '.git', 'munkey.yml'), 'w' do |f|
@@ -43,20 +54,47 @@ class Munkey
     end
   end
   
-  def pull_ftp_files()
+  def pull_ftp_files(dst = nil)
     ftp = FtpSync.new(@ftpdetails[:host], @ftpdetails[:user], @ftpdetails[:password])
-    ftp.pull_dir(@gitpath, @ftpdetails[:path])
+    ftp.pull_dir(dst || @gitpath, @ftpdetails[:path])
   end
   
-  def commit_changes()
-    Dir.chdir(@gitpath) do
+  def commit_changes(dst = nil)
+    Dir.chdir(dst || @gitpath) do
       system("git add .") && system("git commit -m 'Pull from ftp://#{@ftpdetails[:host]}#{@ftpdetails[:path]} at #{Time.now.to_s}'")
     end
   end
   
-  def create_branch(branch_name = 'munkey')
+  def create_branch(branch_name = DEFAULT_BRANCH)
     Dir.chdir(@gitpath) do
       system("git branch #{branch_name}")
     end
   end
+  
+  def clone_to_tmp(branch = DEFAULT_BRANCH)
+    tmp_repo = File.join ENV['TMPDIR'], create_tmpname
+    system("git clone -b #{branch} #{@gitpath} #{tmp_repo}")
+    tmp_repo
+  end
+  
+  def push_into_base_repo(tmp_repo, branch = DEFAULT_BRANCH)
+    Dir.chdir(tmp_repo) do
+      system("git push origin #{branch}:#{branch}")
+    end
+  end
+  
+  def merge_foreign_changes(branch = DEFAULT_BRANCH)
+    Dir.chdir(@gitpath) do
+      system("git merge #{branch}")
+    end
+  end
+  
+  private
+  
+    def create_tmpname
+      tmpname = ''
+      char_list = ("a".."z").to_a + ("0".."9").to_a
+			1.upto(20) { |i| tmpname << char_list[rand(char_list.size)] }
+			return tmpname
+    end
 end

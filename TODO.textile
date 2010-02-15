@@ -1,4 +1,5 @@
 FTP Sync
 * Add support for gitignores
-* Add optional verbose mode
 * Add handling files to ignore
+* Add a delete option to pull_dir - should delete files that dont exist in the src dir but do exist in the target
+* Add a skip_unchanged option to pull_dir - should skip files with the same timestamp and file size
