@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+require 'munkey'
+
+def show_help
+  puts "USAGE: munkey <subcommand> [options] [args]"
+  puts
+  puts "Available subcommands:"
+  puts "\tclone"
+  puts "\tpull"
+  puts "\tpush"
+  puts "\tadd"
+end
+
+
+case ARGV.shift
+when 'clone'
+  puts "NOT IMPLEMENTED YET"
+when 'pull'
+  puts "NOT IMPLEMENTED YET"
+when 'push'
+  puts "NOT IMPLEMENTED YET"
+when 'add'
+  puts "NOT IMPLEMENTED YET"
+else
+  show_help
+end
+  

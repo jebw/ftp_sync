@@ -1,7 +1,5 @@
 require 'uri'
 require 'ftp_sync'
-require 'YAML'
-require 'FileUtils'
 
 class Munkey
   DEFAULT_BRANCH = 'munkey'

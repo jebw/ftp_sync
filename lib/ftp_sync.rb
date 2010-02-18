@@ -1,6 +1,5 @@
 require 'net/ftp'
 require 'net/ftp/list'
-require 'FileUtils'
 
 class FtpSync
   attr_accessor :verbose
