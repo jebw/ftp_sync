@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec| 
   spec.name = "munkey"
-  spec.version = "0.0.1"
+  spec.version = "0.1.0"
   spec.summary = "Tool for using git to push and pull from ftp servers"
   spec.description = "Tool for using git to push and pull from ftp servers"
   

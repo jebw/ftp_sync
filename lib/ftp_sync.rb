@@ -21,7 +21,9 @@ class FtpSync
     
     tocopy = []
     recurse = []
-    @connection.list(remotepath) do |entry|
+    @connection.list(remotepath) do |e|
+      entry = Net::FTP::List.parse(e)
+      
       paths = [ File.join(localpath, entry.basename), "#{remotepath}/#{entry.basename}" ]
       if entry.dir?
         recurse << paths
