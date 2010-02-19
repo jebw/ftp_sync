@@ -5,6 +5,10 @@ FTP Sync
 * Add a skip_unchanged option to pull_dir - should skip files with the same timestamp and file size
 
 Munkey
-* Add gemspec and turn into gem
 * Add readme
-* Add command line program
+* Implement pull in command line program
+* Add no-merge option to pull
+* Implement push
+* Add verbose option to command line program
+* Change pull to use skip unchanged by default
+* Add 'Full' option to Pull which doesnt skip unchanged
