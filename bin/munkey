@@ -1,27 +1,50 @@
 #!/usr/bin/env ruby
 require 'munkey'
 
-def show_help
-  puts "USAGE: munkey <subcommand> [options] [args]"
-  puts
-  puts "Available subcommands:"
-  puts "\tclone"
-  puts "\tpull"
-  puts "\tpush"
-  puts "\tadd"
-end
-
-
-case ARGV.shift
-when 'clone'
-  puts "NOT IMPLEMENTED YET"
-when 'pull'
-  puts "NOT IMPLEMENTED YET"
-when 'push'
-  puts "NOT IMPLEMENTED YET"
-when 'add'
-  puts "NOT IMPLEMENTED YET"
-else
-  show_help
-end
+class MunkeyBin
+  def clone(args)
+    ignores = (/^--ignore=/ =~ args.first) ? read_ignores(args.shift) : nil    
+    src = args.shift
+    dst = args.shift
+    dst ||= join_to_pwd(src.split('/').last) if src
+    show_help unless src && dst
+    Munkey::clone(src, dst, ignores)
+  end
   
+  def pull(args)
+    puts "NOT IMPLEMENTED"
+  end
+  
+  def push(args)
+    puts "NOT IMPLEMENTED"
+  end
+  
+  def show_help
+    puts "Usage: munkey <command> [options] [args]"
+    puts
+    puts "munkey clone [--ignore=ignoresfile] ftp://usr:pwd@host/dir [dst]"
+    puts "\t- Clone from FTP source"
+    puts "munkey pull [--no-merge]"
+    puts "\t- Pull in changes from FTP source"
+    puts "munkey push"
+    puts "\t- Push your changes back to FTP source"
+    exit
+  end
+  
+  protected
+    def join_to_pwd(path)
+      /^\// =~ path ? path : File.join(Dir.pwd, path)
+    end
+    
+    def read_ignores(arg)
+      ignore_file = arg.gsub(/^--ignore=/, '')
+      File.read join_to_pwd(ignore_file)
+    end
+end
+
+munkey = MunkeyBin.new
+if !ARGV.empty? and munkey.respond_to?(cmd = ARGV.shift)
+  munkey.send cmd, ARGV
+else
+  munkey.show_help
+end
