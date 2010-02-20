@@ -49,7 +49,7 @@ class FtpSync
     
     if options[:delete]
       todelete.each do |p|
-        FileUtils.rm_rf p
+        block_given? ? yield(p) : FileUtils.rm_rf(p)
         log "Removed path #{p}"
       end
     end
