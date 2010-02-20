@@ -6,7 +6,6 @@ FTP Sync
 
 Munkey
 * Add readme
-* Implement pull in command line program
 * Add no-merge option to pull
 * Implement push
 * Add verbose option to command line program

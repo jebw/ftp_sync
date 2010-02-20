@@ -13,7 +13,7 @@ class MunkeyBin
   end
   
   def pull(args)
-    puts "NOT IMPLEMENTED"
+    Munkey.new(Dir.pwd).pull
   end
   
   def push(args)
