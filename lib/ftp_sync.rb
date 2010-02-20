@@ -15,9 +15,11 @@ class FtpSync
     @verbose = false
   end
   
-  def pull_dir(localpath, remotepath)
+  def pull_dir(localpath, remotepath, options = {})
     connect! unless @connection
     @recursion_level += 1
+    
+    todelete = Dir.glob(File.join(localpath, '*'))
     
     tocopy = []
     recurse = []
@@ -30,6 +32,7 @@ class FtpSync
       elsif entry.file?
         tocopy << paths
       end
+      todelete.delete paths[0]
     end
     
     tocopy.each do |paths|
@@ -42,6 +45,13 @@ class FtpSync
       localdir, remotedir = paths
       Dir.mkdir(localdir) unless File.exist?(localdir)
       pull_dir(localdir, remotedir)
+    end
+    
+    if options[:delete]
+      todelete.each do |p|
+        FileUtils.rm_rf p
+        log "Removed path #{p}"
+      end
     end
     
     @recursion_level -= 1
