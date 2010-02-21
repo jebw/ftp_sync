@@ -44,7 +44,7 @@ class FtpSync
     recurse.each do |paths|
       localdir, remotedir = paths
       Dir.mkdir(localdir) unless File.exist?(localdir)
-      pull_dir(localdir, remotedir)
+      pull_dir(localdir, remotedir, options)
     end
     
     if options[:delete]
