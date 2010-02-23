@@ -6,6 +6,8 @@ since it downloads all the (non-.gitignore'd) files each time.
 
 Will be able to push changes back into the ftp source in the near future.
 
+Note: Depends on net-ftp-list gem so be sure to install that as well
+
 == Usage
 
 munkey clone [--ignore=ignoresfile] ftp://usr:pwd@host/dir [dst]
