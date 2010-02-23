@@ -14,7 +14,7 @@ class FtpSync
     @verbose = false
   end
   
-  def pull_dir(localpath, remotepath, options = {})
+  def pull_dir(localpath, remotepath, options = {}, &block)
     connect! unless @connection
     @recursion_level += 1
     
@@ -45,7 +45,7 @@ class FtpSync
     recurse.each do |paths|
       localdir, remotedir = paths
       Dir.mkdir(localdir) unless File.exist?(localdir)
-      pull_dir(localdir, remotedir, options)
+      pull_dir(localdir, remotedir, options, &block)
     end
     
     if options[:delete]

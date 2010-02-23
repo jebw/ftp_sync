@@ -55,9 +55,15 @@ class Munkey
   end
   
   def pull_ftp_files(dst = nil)
-    gitignore = GitignoreParser.parse(dst || @gitpath)
+    dst ||= @gitpath
+    gitignore = GitignoreParser.parse(dst)
     ftp = FtpSync.new(@ftpdetails[:host], @ftpdetails[:user], @ftpdetails[:password], gitignore)
-    ftp.pull_dir(dst || @gitpath, @ftpdetails[:path])
+    ftp.pull_dir(dst, @ftpdetails[:path], { :delete => true }) do |p|
+      Dir.chdir(dst) do
+        relpath = p.gsub %r{^#{Regexp.escape(dst)}\/}, ''
+        system("git rm -r '#{relpath}'")
+      end
+    end
   end
   
   def commit_changes(dst = nil)
