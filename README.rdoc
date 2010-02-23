@@ -1,0 +1,18 @@
+= Munkey
+
+Builds a git repository from the supplied ftp path, and can then pull in 
+additional updates from the upstream ftp source. This is not very efficient
+since it downloads all the (non-.gitignore'd) files each time.
+
+Will be able to push changes back into the ftp source in the near future.
+
+== Usage
+
+munkey clone [--ignore=ignoresfile] ftp://usr:pwd@host/dir [dst]
+
+munkey pull [--no-merge] - pulls in new changes from ftp
+
+== Caveats
+
+* Gitignore support doesn't understand inverse (!...) lines -- patches welcome
+* Probably doesn't work on Windows (or any non-unix platform)

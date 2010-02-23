@@ -1,9 +1,9 @@
 FTP Sync
 * Handle when src dir doesn't exist
+* Document code with RDoc
 
 Munkey
-* Add readme
 * Add no-merge option to pull
 * Implement push
 * Add verbose option to command line program
-* Integrate FtpSync's delete support
+* Document code with RDoc
