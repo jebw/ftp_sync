@@ -8,6 +8,7 @@ class MunkeyBin
     src = args.shift
     dst = args.shift
     dst ||= join_to_pwd(src.split('/').last) if src
+    dst = join_to_pwd(dst) unless dst.slice(0, 1) == '/'
     show_help unless src && dst
     Munkey::clone(src, dst, ignores)
   end
