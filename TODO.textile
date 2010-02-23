@@ -1,7 +1,4 @@
 FTP Sync
-* Add support for gitignores
-* Add handling files to ignore
-* Add a skip_unchanged option to pull_dir - should skip files with the same timestamp and file size
 * Handle when src dir doesn't exist
 
 Munkey
@@ -9,5 +6,4 @@ Munkey
 * Add no-merge option to pull
 * Implement push
 * Add verbose option to command line program
-* Change pull to use skip unchanged by default
-* Add 'Full' option to Pull which doesnt skip unchanged
+* Integrate FtpSync's delete support

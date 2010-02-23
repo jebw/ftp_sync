@@ -1,4 +1,6 @@
 class GitignoreParser
+  DEFAULT_IGNORES = ".git\n"
+  
   class << self
     def parse(gitpath)
       new(gitpath)
@@ -9,7 +11,7 @@ class GitignoreParser
     @gitpath = gitpath
     
     ignore_file = File.join(@gitpath, '.gitignore')
-    gitignore = ".git\n"
+    gitignore = DEFAULT_IGNORES
     gitignore << File.read(ignore_file) if File.exist?(ignore_file)
     
     @globs = []
@@ -33,8 +35,8 @@ class GitignoreParser
   
   def ignore?(path)
     raise NotAbsolutePathError unless path.slice(0, 1) == '/'
-    path.gsub! %r{^#{Regexp.escape(@gitpath)}\/}, ''
-    @regex =~ path || @globs.any? {|g| File.fnmatch(g, path) }
+    relpath = path.gsub %r{^#{Regexp.escape(@gitpath)}\/}, ''
+    @regex =~ relpath || @globs.any? {|g| File.fnmatch(g, relpath) }
   end
 
 end

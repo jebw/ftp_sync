@@ -9,8 +9,7 @@ class FtpSync
     @user = user
     @password = password
     @connection = nil
-    @ignore = ".git/\n"
-    @ignore << ignore if ignore
+    @ignore = ignore
     @recursion_level = 0
     @verbose = false
   end
@@ -37,8 +36,10 @@ class FtpSync
     
     tocopy.each do |paths|
       localfile, remotefile = paths
-      @connection.get(remotefile, localfile)
-      log "Pulled file #{remotefile}"
+      unless should_ignore?(localfile)
+        @connection.get(remotefile, localfile)
+        log "Pulled file #{remotefile}"
+      end
     end
     
     recurse.each do |paths|
@@ -100,6 +101,10 @@ class FtpSync
       log "Pushed file #{remotepath}/#{f}"
     end
     close!
+  end
+  
+  def should_ignore?(path)
+    @ignore && @ignore.ignore?(path)
   end
   
   private

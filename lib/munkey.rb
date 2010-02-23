@@ -1,6 +1,7 @@
 require 'uri'
 require 'ftp_sync'
 require 'yaml'
+require 'gitignore_parser'
 
 class Munkey
   DEFAULT_BRANCH = 'munkey'
@@ -54,7 +55,8 @@ class Munkey
   end
   
   def pull_ftp_files(dst = nil)
-    ftp = FtpSync.new(@ftpdetails[:host], @ftpdetails[:user], @ftpdetails[:password])
+    gitignore = GitignoreParser.parse(dst || @gitpath)
+    ftp = FtpSync.new(@ftpdetails[:host], @ftpdetails[:user], @ftpdetails[:password], gitignore)
     ftp.pull_dir(dst || @gitpath, @ftpdetails[:path])
   end
   
