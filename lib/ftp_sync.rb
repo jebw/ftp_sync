@@ -2,7 +2,7 @@ require 'net/ftp'
 require 'net/ftp/list'
 
 class FtpSync
-  attr_accessor :verbose
+  attr_accessor :verbose, :server, :user, :password
   
   def initialize(server, user, password, ignore = nil)
     @server = server
