@@ -63,7 +63,7 @@ class Munkey
         relpath = p.gsub %r{^#{Regexp.escape(dst)}\/}, ''
         system("git rm -r '#{relpath}'")
       end
-    end
+    end  
   end
   
   def commit_changes(dst = nil)

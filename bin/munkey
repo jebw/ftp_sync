@@ -46,7 +46,11 @@ end
 
 munkey = MunkeyBin.new
 if !ARGV.empty? and munkey.respond_to?(cmd = ARGV.shift)
-  munkey.send cmd, ARGV
+  begin
+    munkey.send cmd, ARGV
+  rescue
+    puts "WARNING: Invalid FTP Source"
+  end
 else
   munkey.show_help
 end

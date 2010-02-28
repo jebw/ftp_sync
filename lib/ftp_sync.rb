@@ -22,7 +22,12 @@ class FtpSync
     
     tocopy = []
     recurse = []
-    @connection.list(remotepath) do |e|
+
+    # To trigger error if path doesnt exist since list will
+    # just return and empty array
+    @connection.chdir(remotepath) 
+
+    @connection.list(remotepath) do |e|      
       entry = Net::FTP::List.parse(e)
       
       paths = [ File.join(localpath, entry.basename), "#{remotepath}/#{entry.basename}" ]
@@ -57,6 +62,9 @@ class FtpSync
     
     @recursion_level -= 1
     close! if @recursion_level == 0
+  rescue Net::FTPPermError
+    close!
+    raise Net::FTPPermError
   end
   
   def push_dir(localpath, remotepath)
