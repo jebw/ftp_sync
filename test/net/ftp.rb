@@ -2,14 +2,14 @@ module Net
   class FTP
     class << self
       def ftp_src
-        @ftp_src ||= set_ftp_src
+        @ftp_src || reset_ftp_src
       end
       
       def ftp_src=(src)
         @ftp_src = src
       end
       
-      def set_ftp_src
+      def get_ftp_src
         src = {}
         src['/'] = [ 
           "-rw-r--r--   1 user  users  100 Feb 20 22:57 README",
@@ -22,7 +22,7 @@ module Net
           "-rw-r--r--   1 user  users  100 Feb 20 22:57 fileAA",
           "drwxr-xr-x   1 user  users  100 Feb 20 22:57 dirAA"
         ]
-        src['/dirAA'] = [
+        src['/dirA/dirAA'] = [
           "-rw-r--r--   1 user  users  100 Feb 20 22:57 fileAAA"
         ]
         src['/dirB'] = [
@@ -31,10 +31,18 @@ module Net
         ]
         src
       end
+      
+      def reset_ftp_src
+        @ftp_src = get_ftp_src
+      end
     end
     
     def initialize(server)
       raise SocketError unless server == 'test.server'
+    end
+    
+    def inspect
+      "Mocked Net::FTP server=#{@server}"
     end
     
     def login(user, pass)
@@ -49,7 +57,18 @@ module Net
     end
     
     def chdir(dir)
-      raise Net::FTPPermError unless self.ftp_src.keys.include?(dir)
+      raise Net::FTPPermError unless self.class.ftp_src.keys.include?(dir)
+    end
+    
+    def list(dir)
+      if block_given?
+        (self.class.ftp_src[dir] || []).each do |e|
+          yield e
+        end
+      else
+        return [] unless self.class.ftp_src.keys.include?(dir)
+        self.class.ftp_src[dir]
+      end
     end
     
     def close; end

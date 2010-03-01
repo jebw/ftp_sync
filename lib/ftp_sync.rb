@@ -17,7 +17,7 @@ class FtpSync
   def pull_dir(localpath, remotepath, options = {}, &block)
     connect! unless @connection
     @recursion_level += 1
-    
+
     todelete = Dir.glob(File.join(localpath, '*'))
     
     tocopy = []
@@ -27,10 +27,11 @@ class FtpSync
     # just return and empty array
     @connection.chdir(remotepath) 
 
-    @connection.list(remotepath) do |e|      
+    @connection.list(remotepath) do |e|
       entry = Net::FTP::List.parse(e)
       
-      paths = [ File.join(localpath, entry.basename), "#{remotepath}/#{entry.basename}" ]
+      paths = [ File.join(localpath, entry.basename), "#{remotepath}/#{entry.basename}".gsub(/\/+/, '/') ]
+
       if entry.dir?
         recurse << paths
       elsif entry.file?

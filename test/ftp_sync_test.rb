@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'test/unit'
+require 'net/ftp'
 require 'ftp_sync'
 require 'tmpdir'
 
@@ -10,7 +11,10 @@ end
 class FtpSyncTest < Test::Unit::TestCase
   
   def setup
-    @dst = Dir.tmpdir
+    Net::FTP.reset_ftp_src
+    @dst = File.join Dir.tmpdir, create_tmpname
+    FileUtils.mkdir_p @dst
+    @ftp = FtpSync.new('test.server', 'user', 'pass')
   end
   
   def teardown
@@ -18,18 +22,16 @@ class FtpSyncTest < Test::Unit::TestCase
   end
   
   def test_can_initialize_with_params
-    ftp = FtpSync.new('localhost', 'testuser', 'testpass')
-    assert_equal 'localhost', ftp.server
-    assert_equal 'testuser', ftp.user
-    assert_equal 'testpass', ftp.password
+    assert_equal 'test.server', @ftp.server
+    assert_equal 'user', @ftp.user
+    assert_equal 'pass', @ftp.password
   end
   
   def test_can_set_verbose
-    ftp = FtpSync.new('localhost', 'testuser', 'testpass')
-    ftp.verbose = true
-    assert_equal true, ftp.verbose
-    ftp.verbose = false
-    assert_equal false, ftp.verbose  
+    @ftp.verbose = true
+    assert_equal true, @ftp.verbose
+    @ftp.verbose = false
+    assert_equal false, @ftp.verbose  
   end
   
   def test_setting_an_ignore_object    
@@ -53,15 +55,73 @@ class FtpSyncTest < Test::Unit::TestCase
   end
   
   def test_pulling_files
-    ftp = FtpSync.new('test.server', 'user', 'pass')
-    ftp.pull_files(@dst, '/', ['README', 'fileA' ])
+    @ftp.pull_files(@dst, '/', ['README', 'fileA'])
     assert File.exist?(File.join(@dst, 'README'))
+    assert File.exist?(File.join(@dst, 'fileA'))
   end
   
   def test_pulling_unknown_files
     assert_raise Net::FTPPermError do
-      ftp = FtpSync.new('test.server', 'user', 'pass')
-      ftp.pull_files(@dst, '/', ['unknown' ])
+      @ftp.pull_files(@dst, '/', ['unknown' ])
     end
-  end  
+  end
+  
+  def test_pulling_files_from_subdirs
+    @ftp.pull_files(@dst, '/', ['dirA/fileAA'])
+    assert File.exist?(File.join(@dst, 'dirA/fileAA'))
+  end
+  
+  def test_pull_dir_from_root
+    @ftp.pull_dir(@dst, '/')
+    assert File.exist?(File.join(@dst, 'fileA'))
+    assert File.exist?(File.join(@dst, 'fileB'))
+    assert File.exist?(File.join(@dst, 'dirA/fileAA'))
+    assert File.exist?(File.join(@dst, 'dirA/dirAA/fileAAA'))
+    assert File.exist?(File.join(@dst, 'dirB/fileBA'))
+    assert File.exist?(File.join(@dst, 'dirB/fileBB'))
+  end
+  
+  def test_pull_dir_from_subdir
+    @ftp.pull_dir(@dst, '/dirA')
+    assert File.exist?(File.join(@dst, 'fileAA'))
+    assert File.exist?(File.join(@dst, 'dirAA/fileAAA'))
+  end
+  
+  def test_pull_dir_from_nonexistant_dir
+    assert_raise Net::FTPPermError do
+      @ftp.pull_dir(@dst, 'something')
+    end
+  end
+  
+  def test_pulling_dir_over_existing_files
+    assert_nothing_raised do
+      @ftp.pull_dir(@dst, '/')
+      FileUtils.rm File.join(@dst, 'README')
+      @ftp.pull_dir(@dst, '/')
+      assert File.exist?(File.join(@dst, 'README'))
+    end
+  end
+  
+  def test_pulling_dir_with_deleting_files
+    @ftp.pull_dir(@dst, '/')
+    Net::FTP.ftp_src['/'].shift
+    @ftp.pull_dir(@dst, '/', :delete => true)
+    assert !File.exist?(File.join(@dst, 'README'))
+  end
+  
+  def test_pulling_dir_with_not_deleting_files
+    @ftp.pull_dir(@dst, '/')
+    assert File.exist?(File.join(@dst, 'README'))
+    Net::FTP.ftp_src['/'].shift
+    @ftp.pull_dir(@dst, '/')
+    assert File.exist?(File.join(@dst, 'README'))
+  end
+  
+  protected
+   def create_tmpname
+      tmpname = ''
+      char_list = ("a".."z").to_a + ("0".."9").to_a
+			1.upto(20) { |i| tmpname << char_list[rand(char_list.size)] }
+			return tmpname
+    end
 end
