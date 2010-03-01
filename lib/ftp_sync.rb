@@ -1,4 +1,5 @@
 require 'net/ftp'
+require 'rubygems'
 require 'net/ftp/list'
 
 class FtpSync
