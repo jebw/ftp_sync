@@ -56,6 +56,19 @@ module Net
       FileUtils.touch(dst)
     end
     
+    def put(src, dst)
+      d,f = File.split(dst)
+      raise Net::FTPPermError unless self.class.ftp_src.keys.include?(d)
+      self.class.ftp_src[d] << f
+    end
+    
+    def mkdir(dir)
+      d,sd = File.split(dir)
+      raise Net::FTPPermError if self.class.ftp_src.keys.include?(dir)
+      raise Net::FTPPermError unless self.class.ftp_src.keys.include?(d)
+      self.class.ftp_src[dir] = []
+    end
+    
     def chdir(dir)
       raise Net::FTPPermError unless self.class.ftp_src.keys.include?(dir)
     end

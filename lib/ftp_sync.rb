@@ -75,8 +75,8 @@ class FtpSync
     Dir.glob(File.join(localpath, '**', '*')) do |f|
       f.gsub!("#{localpath}/", '')
       local = File.join localpath, f
-      remote = "#{remotepath}/#{f}"
-      
+      remote = "#{remotepath}/#{f}".gsub(/\/+/, '/')
+            
       if File.directory?(local)
         @connection.mkdir remote rescue Net::FTPPermError
         log "Created Remote Directory #{local}"
@@ -103,7 +103,7 @@ class FtpSync
   def push_files(localpath, remotepath, filelist)
     connect!
     
-    remote_paths = filelist.map {|f| File.dirname(f) }.uniq
+    remote_paths = filelist.map {|f| File.dirname(f) }.uniq.reject{|p| p == '.' }
     create_remote_paths(remotepath, remote_paths)
     
     filelist.each do |f|
@@ -130,6 +130,7 @@ class FtpSync
     end
     
     def create_remote_paths(base, pathlist)
+      base = '' if base == '/'
       pathlist.each do |remotepath|
         parent = base
         remotepath.split('/').each do |p|

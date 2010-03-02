@@ -12,13 +12,13 @@ class FtpSyncTest < Test::Unit::TestCase
   
   def setup
     Net::FTP.reset_ftp_src
-    @dst = File.join Dir.tmpdir, create_tmpname
-    FileUtils.mkdir_p @dst
+    @local = File.join Dir.tmpdir, create_tmpname
+    FileUtils.mkdir_p @local
     @ftp = FtpSync.new('test.server', 'user', 'pass')
   end
   
   def teardown
-    FileUtils.rm_rf @dst
+    FileUtils.rm_rf @local
   end
   
   def test_can_initialize_with_params
@@ -43,78 +43,98 @@ class FtpSyncTest < Test::Unit::TestCase
   def test_pulling_from_an_unknown_server
     assert_raise SocketError do
       ftp = FtpSync.new('unknown.server', 'user', 'pass')
-      ftp.pull_files(@dst, '/', ['README'])
+      ftp.pull_files(@local, '/', ['README'])
     end
   end
   
   def test_pulling_files_with_bad_account_details
     assert_raise Net::FTPPermError do
       ftp = FtpSync.new('test.server', 'unknown', 'unknown')
-      ftp.pull_files(@dst, '/', ['README'])
+      ftp.pull_files(@local, '/', ['README'])
     end
   end
   
   def test_pulling_files
-    @ftp.pull_files(@dst, '/', ['README', 'fileA'])
-    assert File.exist?(File.join(@dst, 'README'))
-    assert File.exist?(File.join(@dst, 'fileA'))
+    @ftp.pull_files(@local, '/', ['README', 'fileA'])
+    assert File.exist?(File.join(@local, 'README'))
+    assert File.exist?(File.join(@local, 'fileA'))
   end
   
   def test_pulling_unknown_files
     assert_raise Net::FTPPermError do
-      @ftp.pull_files(@dst, '/', ['unknown' ])
+      @ftp.pull_files(@local, '/', ['unknown' ])
     end
   end
   
   def test_pulling_files_from_subdirs
-    @ftp.pull_files(@dst, '/', ['dirA/fileAA'])
-    assert File.exist?(File.join(@dst, 'dirA/fileAA'))
+    @ftp.pull_files(@local, '/', ['dirA/fileAA'])
+    assert File.exist?(File.join(@local, 'dirA/fileAA'))
   end
   
   def test_pull_dir_from_root
-    @ftp.pull_dir(@dst, '/')
-    assert File.exist?(File.join(@dst, 'fileA'))
-    assert File.exist?(File.join(@dst, 'fileB'))
-    assert File.exist?(File.join(@dst, 'dirA/fileAA'))
-    assert File.exist?(File.join(@dst, 'dirA/dirAA/fileAAA'))
-    assert File.exist?(File.join(@dst, 'dirB/fileBA'))
-    assert File.exist?(File.join(@dst, 'dirB/fileBB'))
+    @ftp.pull_dir(@local, '/')
+    assert File.exist?(File.join(@local, 'fileA'))
+    assert File.exist?(File.join(@local, 'fileB'))
+    assert File.exist?(File.join(@local, 'dirA/fileAA'))
+    assert File.exist?(File.join(@local, 'dirA/dirAA/fileAAA'))
+    assert File.exist?(File.join(@local, 'dirB/fileBA'))
+    assert File.exist?(File.join(@local, 'dirB/fileBB'))
   end
   
   def test_pull_dir_from_subdir
-    @ftp.pull_dir(@dst, '/dirA')
-    assert File.exist?(File.join(@dst, 'fileAA'))
-    assert File.exist?(File.join(@dst, 'dirAA/fileAAA'))
+    @ftp.pull_dir(@local, '/dirA')
+    assert File.exist?(File.join(@local, 'fileAA'))
+    assert File.exist?(File.join(@local, 'dirAA/fileAAA'))
   end
   
   def test_pull_dir_from_nonexistant_dir
     assert_raise Net::FTPPermError do
-      @ftp.pull_dir(@dst, 'something')
+      @ftp.pull_dir(@local, 'something')
     end
   end
   
   def test_pulling_dir_over_existing_files
     assert_nothing_raised do
-      @ftp.pull_dir(@dst, '/')
-      FileUtils.rm File.join(@dst, 'README')
-      @ftp.pull_dir(@dst, '/')
-      assert File.exist?(File.join(@dst, 'README'))
+      @ftp.pull_dir(@local, '/')
+      FileUtils.rm File.join(@local, 'README')
+      @ftp.pull_dir(@local, '/')
+      assert File.exist?(File.join(@local, 'README'))
     end
   end
   
   def test_pulling_dir_with_deleting_files
-    @ftp.pull_dir(@dst, '/')
+    @ftp.pull_dir(@local, '/')
     Net::FTP.ftp_src['/'].shift
-    @ftp.pull_dir(@dst, '/', :delete => true)
-    assert !File.exist?(File.join(@dst, 'README'))
+    @ftp.pull_dir(@local, '/', :delete => true)
+    assert !File.exist?(File.join(@local, 'README'))
   end
   
   def test_pulling_dir_with_not_deleting_files
-    @ftp.pull_dir(@dst, '/')
-    assert File.exist?(File.join(@dst, 'README'))
+    @ftp.pull_dir(@local, '/')
+    assert File.exist?(File.join(@local, 'README'))
     Net::FTP.ftp_src['/'].shift
-    @ftp.pull_dir(@dst, '/')
-    assert File.exist?(File.join(@dst, 'README'))
+    @ftp.pull_dir(@local, '/')
+    assert File.exist?(File.join(@local, 'README'))
+  end
+  
+  def test_pushing_files
+    Net::FTP.ftp_src = { '/' => [] }
+    FileUtils.touch(File.join(@local, 'localA'))
+    FileUtils.mkdir_p(File.join(@local, 'localdirA'))
+    FileUtils.touch(File.join(@local, 'localdirA', 'localAA'))
+    @ftp.push_files(@local, '/', ['localA', File.join('localdirA', 'localAA')])
+    assert_equal ['localA'], Net::FTP.ftp_src['/']
+    assert_equal ['localAA'], Net::FTP.ftp_src['/localdirA']
+  end
+  
+  def test_pushing_dir
+    Net::FTP.ftp_src = { '/' => [] }
+    FileUtils.touch(File.join(@local, 'localA'))
+    FileUtils.mkdir_p(File.join(@local, 'localdirA'))
+    FileUtils.touch(File.join(@local, 'localdirA', 'localAA'))
+    @ftp.push_dir(@local, '/')
+    assert_equal ['localA'], Net::FTP.ftp_src['/']
+    assert_equal ['localAA'], Net::FTP.ftp_src['/localdirA']
   end
   
   protected
