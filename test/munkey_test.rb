@@ -5,6 +5,7 @@ require 'munkey'
 class MunkeyTest < Test::Unit::TestCase
   
   def setup
+    Net::FTP.reset_ftp_src
     @gitdir = File.join Dir.tmpdir, create_tmpname
   end
   
@@ -49,7 +50,6 @@ class MunkeyTest < Test::Unit::TestCase
     Munkey.clone('ftp://user:pass@test.server/', @gitdir)
     Dir.chdir(@gitdir) do
       status = `git status`
-      puts "STATUS IS #{status}"
       assert_no_match /untracked files present/, status
     end
   end
@@ -61,6 +61,31 @@ class MunkeyTest < Test::Unit::TestCase
       assert branches.include?('master')
       assert branches.include?('munkey')
     end
+  end
+  
+  def test_pull_adds_new_files
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    Net::FTP.ftp_src['/'] << "-rw-r--r--   1 user  users  100 Feb 20 22:57 missing"
+    assert !File.exist?(File.join(@gitdir, 'missing'))
+    munkey.pull
+    assert File.exist?(File.join(@gitdir, 'missing'))
+  end
+  
+  def test_pull_removes_missing_files
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    Net::FTP.ftp_src['/'].shift
+    assert File.exist?(File.join(@gitdir, 'README'))
+    munkey.pull
+    assert !File.exist?(File.join(@gitdir, 'README'))
+  end
+  
+  def test_pull_doesnt_change_locally_removed_files
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    readme = File.join(@gitdir, 'README')
+    File.unlink(readme)
+    assert !File.exist?(readme)
+    munkey.pull
+    assert !File.exist?(readme)
   end
   
   protected
