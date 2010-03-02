@@ -5,7 +5,12 @@ require 'tmpdir'
 class GitignoreTest < Test::Unit::TestCase
   
   def setup
-    @gitdir = Dir.tmpdir
+    @gitdir = File.join Dir.tmpdir, create_tmpname
+    FileUtils.mkdir_p @gitdir
+  end
+  
+  def teardown
+    FileUtils.rm_rf @gitdir
   end
     
   def test_skips_blank_lines_in_gitignore
@@ -87,11 +92,14 @@ class GitignoreTest < Test::Unit::TestCase
     assert !gitignore.ignore?(File.join(@gitdir, "foo/bar"))
   end
   
-  def teardown
-    FileUtils.rm_rf @gitdir
-  end
-  
   protected
+
+   def create_tmpname
+      tmpname = ''
+      char_list = ("a".."z").to_a + ("0".."9").to_a
+			1.upto(20) { |i| tmpname << char_list[rand(char_list.size)] }
+			return tmpname
+    end
   
     def create_git_ignore(ignore_content)
       File.open File.join(@gitdir, '.gitignore'), 'w' do |f|

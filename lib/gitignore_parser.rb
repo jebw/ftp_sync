@@ -12,7 +12,7 @@ class GitignoreParser
     
     ignore_file = File.join(@gitpath, '.gitignore')
     gitignore = DEFAULT_IGNORES
-    gitignore << File.read(ignore_file) if File.exist?(ignore_file)
+    gitignore += File.read(ignore_file) if File.exist?(ignore_file)
     
     @globs = []
     rx = gitignore.split("\n").map do |i|
@@ -30,7 +30,7 @@ class GitignoreParser
         nil
       end
     end.compact.join("|")
-    @regex = Regexp.new(rx) unless rx == ''
+    @regex = (rx == '' ? nil : Regexp.new(rx))
   end
   
   def ignore?(path)
