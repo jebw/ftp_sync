@@ -1,39 +1,38 @@
+require 'tmpdir'
+
 module Net
   class FTP
     class << self
       def ftp_src
-        @ftp_src || reset_ftp_src
+        @ftp_src ||= File.join(Dir.tmpdir, 'munkey_ftp_src')
       end
       
       def ftp_src=(src)
         @ftp_src = src
       end
       
-      def get_ftp_src
-        src = {}
-        src['/'] = [ 
-          "-rw-r--r--   1 user  users  100 Feb 20 22:57 README",
-          "drwxr-xr-x   1 user  users  100 Feb 20 22:57 dirA",
-          "drwxr-xr-x   1 user  users  100 Feb 20 22:57 dirB",
-          "-rw-r--r--   1 user  users  100 Feb 20 22:57 fileA",
-          "-rw-r--r--   1 user  users  100 Feb 20 22:57 fileB",
-        ]
-        src['/dirA'] = [
-          "-rw-r--r--   1 user  users  100 Feb 20 22:57 fileAA",
-          "drwxr-xr-x   1 user  users  100 Feb 20 22:57 dirAA"
-        ]
-        src['/dirA/dirAA'] = [
-          "-rw-r--r--   1 user  users  100 Feb 20 22:57 fileAAA"
-        ]
-        src['/dirB'] = [
-          "-rw-r--r--   1 user  users  100 Feb 20 22:57 fileBA",
-          "-rw-r--r--   1 user  users  100 Feb 20 22:57 fileBB"
-        ]
-        src
+      def create_ftp_src
+        FileUtils.mkdir_p File.join(ftp_src, 'dirA', 'dirAA')
+        FileUtils.mkdir_p File.join(ftp_src, 'dirB')
+        FileUtils.touch File.join(ftp_src, 'README')
+        FileUtils.touch File.join(ftp_src, 'fileA')
+        FileUtils.touch File.join(ftp_src, 'fileB')
+        FileUtils.touch File.join(ftp_src, 'dirA', 'fileAA')
+        FileUtils.touch File.join(ftp_src, 'dirA', 'dirAA', 'fileAAA')
+        FileUtils.touch File.join(ftp_src, 'dirB', 'fileBA')
+        FileUtils.touch File.join(ftp_src, 'dirB', 'fileBB')
       end
       
-      def reset_ftp_src
-        @ftp_src = get_ftp_src
+      def ftp_dst
+        @ftp_dst ||= File.join(Dir.tmpdir, 'munkey_ftp_dst')
+      end
+      
+      def ftp_dst=(dst)
+        @ftp_dst = dst
+      end
+    
+      def create_ftp_dst
+        FileUtils.mkdir_p ftp_dst
       end
     end
     
@@ -50,41 +49,48 @@ module Net
     end
     
     def get(src, dst)
-      d,f = File.split(src)
-      raise Net::FTPPermError unless self.class.ftp_src.keys.include?(d)
-      raise Net::FTPPermError unless self.class.ftp_src[d].any? {|e| Net::FTP::List.parse(e).basename == f }
-      FileUtils.touch(dst)
+      raise Net::FTPPermError unless File.exist?(src_path(src))
+      FileUtils.cp src_path(src), dst
     end
     
     def put(src, dst)
       d,f = File.split(dst)
-      raise Net::FTPPermError unless self.class.ftp_src.keys.include?(d)
-      self.class.ftp_src[d] << f
+      raise Net::FTPPermError unless File.exist?(dst_path(d))
+      FileUtils.cp src, dst_path(dst)
     end
     
     def mkdir(dir)
       d,sd = File.split(dir)
-      raise Net::FTPPermError if self.class.ftp_src.keys.include?(dir)
-      raise Net::FTPPermError unless self.class.ftp_src.keys.include?(d)
-      self.class.ftp_src[dir] = []
+      raise Net::FTPPermError if File.exist?(dst_path(dir))
+      raise Net::FTPPermError unless File.exist?(dst_path(d))
+      FileUtils.mkdir dst_path(dir)
     end
     
     def chdir(dir)
-      raise Net::FTPPermError unless self.class.ftp_src.keys.include?(dir)
+      raise Net::FTPPermError unless File.exist?(src_path(dir))
     end
     
     def list(dir)
-      if block_given?
-        (self.class.ftp_src[dir] || []).each do |e|
-          yield e
-        end
+      paths = if File.exist?(src_path(dir))
+        `ls -l #{src_path(dir)}`.strip.split("\n")
       else
-        return [] unless self.class.ftp_src.keys.include?(dir)
-        self.class.ftp_src[dir]
+        []
       end
+
+      paths.each {|e| yield(e) } if block_given?
+      paths
     end
     
     def close; end
+    
+    private
+      def src_path(p)
+        File.join(self.class.ftp_src, p)
+      end
+      
+      def dst_path(p)
+        File.join(self.class.ftp_dst, p)
+      end
   end
   
   class FTPPermError < RuntimeError; end  

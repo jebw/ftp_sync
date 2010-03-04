@@ -5,12 +5,14 @@ require 'munkey'
 class MunkeyTest < Test::Unit::TestCase
   
   def setup
-    Net::FTP.reset_ftp_src
+    Net::FTP.create_ftp_src
     @gitdir = File.join Dir.tmpdir, create_tmpname
   end
   
   def teardown
     FileUtils.rm_rf @gitdir
+    FileUtils.rm_rf Net::FTP.ftp_src
+    FileUtils.rm_rf Net::FTP.ftp_dst if File.exist?(Net::FTP.ftp_dst)
   end
   
   def test_clone_creates_supplied_target_dir
@@ -65,7 +67,7 @@ class MunkeyTest < Test::Unit::TestCase
   
   def test_pull_adds_new_files
     munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
-    Net::FTP.ftp_src['/'] << "-rw-r--r--   1 user  users  100 Feb 20 22:57 missing"
+    FileUtils.touch File.join(Net::FTP.ftp_src, 'missing')
     assert !File.exist?(File.join(@gitdir, 'missing'))
     munkey.pull
     assert File.exist?(File.join(@gitdir, 'missing'))
@@ -73,7 +75,7 @@ class MunkeyTest < Test::Unit::TestCase
   
   def test_pull_removes_missing_files
     munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
-    Net::FTP.ftp_src['/'].shift
+    File.unlink File.join(Net::FTP.ftp_src, 'README')
     assert File.exist?(File.join(@gitdir, 'README'))
     munkey.pull
     assert !File.exist?(File.join(@gitdir, 'README'))
@@ -88,11 +90,21 @@ class MunkeyTest < Test::Unit::TestCase
     assert !File.exist?(readme)
   end
   
+  def test_pull_adds_a_commit
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    FileUtils.touch File.join(Net::FTP.ftp_src, 'missing')
+    munkey.pull
+    Dir.chdir(@gitdir) do
+      commits = `git log --format=oneline`.strip.split("\n")
+      assert_equal 2, commits.size
+    end
+  end
+  
   protected
    def create_tmpname
-      tmpname = ''
-      char_list = ("a".."z").to_a + ("0".."9").to_a
-			1.upto(20) { |i| tmpname << char_list[rand(char_list.size)] }
-			return tmpname
-    end
+    tmpname = ''
+    char_list = ("a".."z").to_a + ("0".."9").to_a
+		1.upto(20) { |i| tmpname << char_list[rand(char_list.size)] }
+		return tmpname
+  end
 end

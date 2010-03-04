@@ -11,7 +11,7 @@ end
 class FtpSyncTest < Test::Unit::TestCase
   
   def setup
-    Net::FTP.reset_ftp_src
+    Net::FTP.create_ftp_src
     @local = File.join Dir.tmpdir, create_tmpname
     FileUtils.mkdir_p @local
     @ftp = FtpSync.new('test.server', 'user', 'pass')
@@ -19,6 +19,8 @@ class FtpSyncTest < Test::Unit::TestCase
   
   def teardown
     FileUtils.rm_rf @local
+    FileUtils.rm_rf Net::FTP.ftp_src
+    FileUtils.rm_rf Net::FTP.ftp_dst if File.exist?(Net::FTP.ftp_dst)
   end
   
   def test_can_initialize_with_params
@@ -104,7 +106,7 @@ class FtpSyncTest < Test::Unit::TestCase
   
   def test_pulling_dir_with_deleting_files
     @ftp.pull_dir(@local, '/')
-    Net::FTP.ftp_src['/'].shift
+    FileUtils.rm_r File.join(Net::FTP.ftp_src, 'README')
     @ftp.pull_dir(@local, '/', :delete => true)
     assert !File.exist?(File.join(@local, 'README'))
   end
@@ -112,29 +114,29 @@ class FtpSyncTest < Test::Unit::TestCase
   def test_pulling_dir_with_not_deleting_files
     @ftp.pull_dir(@local, '/')
     assert File.exist?(File.join(@local, 'README'))
-    Net::FTP.ftp_src['/'].shift
+    FileUtils.rm_r File.join(Net::FTP.ftp_src, 'README')
     @ftp.pull_dir(@local, '/')
     assert File.exist?(File.join(@local, 'README'))
   end
   
   def test_pushing_files
-    Net::FTP.ftp_src = { '/' => [] }
+    Net::FTP.create_ftp_dst
     FileUtils.touch(File.join(@local, 'localA'))
     FileUtils.mkdir_p(File.join(@local, 'localdirA'))
     FileUtils.touch(File.join(@local, 'localdirA', 'localAA'))
     @ftp.push_files(@local, '/', ['localA', File.join('localdirA', 'localAA')])
-    assert_equal ['localA'], Net::FTP.ftp_src['/']
-    assert_equal ['localAA'], Net::FTP.ftp_src['/localdirA']
+    assert File.exist?(File.join(Net::FTP.ftp_dst, 'localA'))
+    assert File.exist?(File.join(Net::FTP.ftp_dst, 'localdirA', 'localAA'))
   end
   
   def test_pushing_dir
-    Net::FTP.ftp_src = { '/' => [] }
+    Net::FTP.create_ftp_dst
     FileUtils.touch(File.join(@local, 'localA'))
     FileUtils.mkdir_p(File.join(@local, 'localdirA'))
     FileUtils.touch(File.join(@local, 'localdirA', 'localAA'))
     @ftp.push_dir(@local, '/')
-    assert_equal ['localA'], Net::FTP.ftp_src['/']
-    assert_equal ['localAA'], Net::FTP.ftp_src['/localdirA']
+    assert File.exist?(File.join(Net::FTP.ftp_dst, 'localA'))
+    assert File.exist?(File.join(Net::FTP.ftp_dst, 'localdirA', 'localAA'))
   end
   
   protected
