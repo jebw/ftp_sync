@@ -100,11 +100,101 @@ class MunkeyTest < Test::Unit::TestCase
     end
   end
   
+  def test_push_includes_newly_added_files
+    Net::FTP.create_ftp_dst
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    add_file_to_git 'newfile'
+    munkey.push
+    assert File.exist?(File.join(Net::FTP.ftp_dst, 'newfile'))
+  end
+  
+  def test_push_includes_files_from_multiple_commits
+    Net::FTP.create_ftp_dst
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    add_file_to_git('newfile')
+    add_file_to_git('secondfile')
+    munkey.push
+    assert File.exist?(File.join(Net::FTP.ftp_dst, 'newfile'))
+    assert File.exist?(File.join(Net::FTP.ftp_dst, 'secondfile'))
+  end
+  
+  def test_push_excludes_remote_added_files
+    Net::FTP.create_ftp_dst
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    FileUtils.touch File.join(Net::FTP.ftp_src, 'another')
+    munkey.pull
+    munkey.push
+    assert !File.exist?(File.join(Net::FTP.ftp_dst, 'another'))
+  end
+  
+  def test_push_excludes_existing_files
+    Net::FTP.create_ftp_dst
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    add_file_to_git 'newfile'
+    munkey.push
+    assert File.exist?(File.join(Net::FTP.ftp_dst, 'newfile'))
+    assert File.exist?(File.join(Net::FTP.ftp_dst, 'README'))
+  end
+  
+  def test_push_includes_files_changed_on_both_local_and_remote
+    Net::FTP.create_ftp_dst
+    File.open(File.join(Net::FTP.ftp_src, 'README'), 'w') do |f| 
+      f.write "line 1\nline 2\nline 3\nline 4\n"
+    end
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    File.open(File.join(Net::FTP.ftp_src, 'README'), 'w') do |f| 
+      f.write "line 1\nline 2\nline 3\nline 4\nline 5\n"
+    end
+    File.open(File.join(@gitdir, 'README'), 'w') do |f|
+      f.write "line 1\nline two\nline 3\nline 4\n"
+    end
+    munkey.pull
+    munkey.push
+    assert File.exist?(File.join(Net::FTP.ftp_dst, 'README'))
+  end
+  
+  def test_push_removes_locally_removed_files
+    FileUtils.cp_r Net::FTP.ftp_src, Net::FTP.ftp_dst
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    Dir.chdir(@gitdir) do
+      system("git rm README && git commit -m 'removed README'")
+    end
+    assert File.exist?(File.join(Net::FTP.ftp_dst, 'README'))
+    munkey.push
+    assert !File.exist?(File.join(Net::FTP.ftp_dst, 'README'))
+  end
+  
+  def test_push_excludes_remotely_removed_files
+    FileUtils.cp_r Net::FTP.ftp_src, Net::FTP.ftp_dst
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    File.unlink File.join(Net::FTP.ftp_src, 'README')
+    munkey.pull
+    munkey.push
+    assert File.exist?(File.join(Net::FTP.ftp_dst, 'README'))
+  end
+  
+  def test_push_excludes_files_with_same_change_local_and_remote
+    Net::FTP.create_ftp_dst
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    File.open(File.join(Net::FTP.ftp_src, 'README'), 'w') {|f| f.write 'munkey' }
+    File.open(File.join(@gitdir, 'README'), 'w') {|f| f.write 'munkey' }
+    munkey.pull
+    munkey.push
+    assert !File.exist?(File.join(Net::FTP.ftp_dst, 'README'))
+  end
+  
   protected
    def create_tmpname
     tmpname = ''
     char_list = ("a".."z").to_a + ("0".."9").to_a
 		1.upto(20) { |i| tmpname << char_list[rand(char_list.size)] }
 		return tmpname
+  end
+  
+  def add_file_to_git(filename, content = nil)
+    Dir.chdir(@gitdir) do
+      File.open(filename, 'a') {|f| f.write content }      
+      system("git add . && git commit -m 'Added file #{filename}'")
+    end
   end
 end
