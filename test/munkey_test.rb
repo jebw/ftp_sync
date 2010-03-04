@@ -10,7 +10,7 @@ class MunkeyTest < Test::Unit::TestCase
   end
   
   def teardown
-    FileUtils.rm_rf @gitdir
+#    FileUtils.rm_rf @gitdir
     FileUtils.rm_rf Net::FTP.ftp_src
     FileUtils.rm_rf Net::FTP.ftp_dst if File.exist?(Net::FTP.ftp_dst)
   end
@@ -133,7 +133,7 @@ class MunkeyTest < Test::Unit::TestCase
     add_file_to_git 'newfile'
     munkey.push
     assert File.exist?(File.join(Net::FTP.ftp_dst, 'newfile'))
-    assert File.exist?(File.join(Net::FTP.ftp_dst, 'README'))
+    assert !File.exist?(File.join(Net::FTP.ftp_dst, 'README'))
   end
   
   def test_push_includes_files_changed_on_both_local_and_remote
@@ -177,10 +177,25 @@ class MunkeyTest < Test::Unit::TestCase
     Net::FTP.create_ftp_dst
     munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
     File.open(File.join(Net::FTP.ftp_src, 'README'), 'w') {|f| f.write 'munkey' }
-    File.open(File.join(@gitdir, 'README'), 'w') {|f| f.write 'munkey' }
+    Dir.chdir(@gitdir) do
+      File.open('README', 'w') {|f| f.write 'munkey' }
+      system("git add . && git commit -m 'add README CHANGES'")
+    end
     munkey.pull
     munkey.push
     assert !File.exist?(File.join(Net::FTP.ftp_dst, 'README'))
+  end
+  
+  def test_push_adds_a_commit_to_the_munkey_branch
+    Net::FTP.create_ftp_dst
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    add_file_to_git('newfile')
+    add_file_to_git('secondfile')
+    munkey.push
+    Dir.chdir(@gitdir) do
+      commits = `git log --format=oneline munkey`.strip.split("\n")
+      assert_equal 3, commits.size
+    end
   end
   
   protected

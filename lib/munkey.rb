@@ -47,6 +47,15 @@ class Munkey
     merge_foreign_changes
   end
   
+  def push
+    changes = files_changed_between_branches
+    update_ftp_server(changes)
+    tmp_repo = clone_to_tmp
+    merge_pushed_changes(tmp_repo)
+    push_into_base_repo(tmp_repo)
+    FileUtils.rm_rf(tmp_repo)
+  end
+  
   def save_ftp_details(ftp_uri)
     @ftpdetails = { :host => ftp_uri.host, :path => "/#{ftp_uri.path}", :user => ftp_uri.user, :password => ftp_uri.password }
     File.open File.join(@gitpath, '.git', 'munkey.yml'), 'w' do |f|
@@ -94,6 +103,34 @@ class Munkey
     Dir.chdir(@gitpath) do
       system("git merge #{branch}")
     end
+  end
+  
+  def merge_pushed_changes(tmp_repo)
+    Dir.chdir(tmp_repo) do
+      system("git pull origin master")
+    end
+  end
+  
+  def files_changed_between_branches(branch = DEFAULT_BRANCH)
+    changes = { :changed => [], :removed => [] }
+    Dir.chdir(@gitpath) do
+      `git diff --name-status #{branch} master`.strip.split("\n").each do |f|
+        status, name = f.split(/\s+/, 2)
+        if status == "D"
+          changes[:removed] << name
+        else
+          changes[:changed] << name
+        end
+      end
+    end
+    
+    changes
+  end
+  
+  def update_ftp_server(changes)
+    ftp = FtpSync.new(@ftpdetails[:host], @ftpdetails[:user], @ftpdetails[:password])
+    ftp.push_files @gitpath, @ftpdetails[:path], changes[:changed]
+#    ftp.remove_files @gitdir, @ftpdetails[:path], changes[:removed]
   end
   
   private
