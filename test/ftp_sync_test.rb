@@ -139,6 +139,18 @@ class FtpSyncTest < Test::Unit::TestCase
     assert File.exist?(File.join(Net::FTP.ftp_dst, 'localdirA', 'localAA'))
   end
   
+  def test_deleting_files
+    Net::FTP.create_ftp_dst
+    FileUtils.touch File.join(Net::FTP.ftp_dst, 'fileA')
+    FileUtils.mkdir File.join(Net::FTP.ftp_dst, 'dirB')
+    FileUtils.touch File.join(Net::FTP.ftp_dst, 'dirB', 'fileB')
+    FileUtils.touch File.join(Net::FTP.ftp_dst, 'fileC')
+    @ftp.remove_files('/', [ 'fileA', 'dirB/fileB' ])
+    assert !File.exist?(File.join(Net::FTP.ftp_dst, 'fileA'))
+    assert !File.exist?(File.join(Net::FTP.ftp_dst, 'dirB', 'fileB'))
+    assert File.exist?(File.join(Net::FTP.ftp_dst, 'fileC'))
+  end
+  
   protected
    def create_tmpname
       tmpname = ''

@@ -81,6 +81,11 @@ module Net
       paths
     end
     
+    def delete(file)
+      raise Net::FTPPermError unless File.exist?(dst_path(file))
+      File.unlink(dst_path(file))
+    end
+    
     def close; end
     
     private

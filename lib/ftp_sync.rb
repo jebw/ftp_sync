@@ -113,6 +113,16 @@ class FtpSync
     close!
   end
   
+  def remove_files(basepath, filelist)
+    connect!
+    
+    filelist.each do |f| 
+      @connection.delete "#{basepath}/#{f}".gsub(/\/+/, '/')
+    end
+    
+    close!
+  end
+  
   def should_ignore?(path)
     @ignore && @ignore.ignore?(path)
   end

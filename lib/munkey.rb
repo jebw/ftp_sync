@@ -129,8 +129,14 @@ class Munkey
   
   def update_ftp_server(changes)
     ftp = FtpSync.new(@ftpdetails[:host], @ftpdetails[:user], @ftpdetails[:password])
-    ftp.push_files @gitpath, @ftpdetails[:path], changes[:changed]
-#    ftp.remove_files @gitdir, @ftpdetails[:path], changes[:removed]
+
+    unless changes[:changed].size == 0
+      ftp.push_files @gitpath, @ftpdetails[:path], changes[:changed]
+    end
+    
+    unless changes[:removed].size == 0
+      ftp.remove_files @ftpdetails[:path], changes[:removed]
+    end
   end
   
   private
