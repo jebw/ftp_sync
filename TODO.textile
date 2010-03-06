@@ -1,9 +1,8 @@
 FTP Sync
-* Handle when src dir doesn't exist
 * Document code with RDoc
+* Add optimised pull that avoids old files with unchanged file sizes
 
 Munkey
 * Add no-merge option to pull
-* Implement push
 * Add verbose option to command line program
 * Document code with RDoc
