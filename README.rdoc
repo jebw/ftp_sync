@@ -1,10 +1,14 @@
 = Munkey
 
-Builds a git repository from the supplied ftp path, and can then pull in 
-additional updates from the upstream ftp source. This is not very efficient
-since it downloads all the (non-.gitignore'd) files each time.
+Uses git to mirror an ftp server and track local changes. These can then be
+pushed back up to the ftp server or additional changes pulled down from the
+ftp server.
 
-Will be able to push changes back into the ftp source in the near future.
+Solves my problem of working on a website locally but needing to interact
+with other developers editing directly the server via ftp.
+
+This is not very efficient yet since it downloads all the (non-.gitignore'd) 
+files each time.
 
 Note: Depends on net-ftp-list gem so be sure to install that as well
 
@@ -13,6 +17,10 @@ Note: Depends on net-ftp-list gem so be sure to install that as well
 munkey clone [--ignore=ignoresfile] ftp://usr:pwd@host/dir [dst]
 
 munkey pull [--no-merge] - pulls in new changes from ftp
+
+munkey push - pushes changes back into ftp server. Important to have pulled
+              recent changes from ftp since munkey will overwrite locally
+              modified files.
 
 == Caveats
 
