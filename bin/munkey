@@ -18,7 +18,7 @@ class MunkeyBin
   end
   
   def push(args)
-    puts "NOT IMPLEMENTED"
+    Munkey.new(Dir.pwd).push
   end
   
   def show_help
