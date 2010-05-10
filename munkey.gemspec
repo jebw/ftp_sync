@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec| 
   spec.name = "munkey"
-  spec.version = "0.3.0"
+  spec.version = "0.3.1"
   spec.summary = "Tool for using git to push and pull from ftp servers"
   spec.description = "Tool for using git to push and pull from ftp servers"
   
@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.email = "jeb@jdwilkins.co.uk"
   spec.homepage = "http://github.com/jebw/munkey"
   
-  spec.test_files = [ 'test/gitignore_test.rb' ]
+  spec.test_files = [ 'test/gitignore_test.rb', 'test/ftp_sync_test.rb', 'test/munkey_test.rb' ]
   spec.has_rdoc = true
   spec.extra_rdoc_files = [ "README.rdoc" ]
 end
