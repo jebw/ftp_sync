@@ -5,14 +5,14 @@ require 'net/ftp/list'
 class FtpSync
   attr_accessor :verbose, :server, :user, :password
   
-  def initialize(server, user, password, ignore = nil)
+  def initialize(server, user, password, options = {})
     @server = server
     @user = user
     @password = password
     @connection = nil
-    @ignore = ignore
+    @ignore = options[:ignore]
     @recursion_level = 0
-    @verbose = false
+    @verbose = options[:verbose] || false
   end
   
   def pull_dir(localpath, remotepath, options = {}, &block)

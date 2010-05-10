@@ -6,3 +6,7 @@ Munkey
 * Add no-merge option to pull
 * Add verbose option to command line program
 * Document code with RDoc
+
+General
+* Make tests run outside of TextMate (load path issues)
+* Make tests run quieter

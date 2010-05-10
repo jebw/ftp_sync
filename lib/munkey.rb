@@ -7,11 +7,11 @@ class Munkey
   DEFAULT_BRANCH = 'munkey'
   
   class << self
-    def clone(ftpsrc, repo_path, ignores = nil)
+    def clone(ftpsrc, repo_path, options = {})
       src = URI::parse(ftpsrc)
       raise InvalidSource unless src.is_a?(URI::FTP)
       
-      repo = create_repo(repo_path, ignores)
+      repo = create_repo(repo_path, options)
       repo.save_ftp_details(src)
       repo.pull_ftp_files
       repo.commit_changes
@@ -20,11 +20,11 @@ class Munkey
     end
     
     private
-      def create_repo(repo_path, ignores = nil)
+      def create_repo(repo_path, options = {})
         return false unless system("git init #{repo_path}")
-        if ignores
+        if options[:ignores]
           File.open(File.join(repo_path, '.gitignore'), 'w') do |f|
-            f.write ignores
+            f.write options[:ignores]
           end
           system("cd #{repo_path} && git add .gitignore")
         end
@@ -66,7 +66,7 @@ class Munkey
   def pull_ftp_files(dst = nil)
     dst ||= @gitpath
     gitignore = GitignoreParser.parse(dst)
-    ftp = FtpSync.new(@ftpdetails[:host], @ftpdetails[:user], @ftpdetails[:password], gitignore)
+    ftp = FtpSync.new(@ftpdetails[:host], @ftpdetails[:user], @ftpdetails[:password], :ignore => gitignore)
     ftp.pull_dir(dst, @ftpdetails[:path], { :delete => true }) do |p|
       Dir.chdir(dst) do
         relpath = p.gsub %r{^#{Regexp.escape(dst)}\/}, ''

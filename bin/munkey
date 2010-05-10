@@ -4,13 +4,14 @@ require 'munkey'
 
 class MunkeyBin
   def clone(args)
-    ignores = (/^--ignore=/ =~ args.first) ? read_ignores(args.shift) : nil    
+    options = {}
+    options[:ignores] = read_ignores(args.shift) if /^--ignore=/ =~ args.first
     src = args.shift
     dst = args.shift
     dst ||= join_to_pwd(src.split('/').last) if src
     dst = join_to_pwd(dst) unless dst.slice(0, 1) == '/'
     show_help unless src && dst
-    Munkey::clone(src, dst, ignores)
+    Munkey::clone(src, dst, options)
   end
   
   def pull(args)

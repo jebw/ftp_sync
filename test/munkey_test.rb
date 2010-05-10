@@ -26,7 +26,7 @@ class MunkeyTest < Test::Unit::TestCase
   end
   
   def test_clone_creates_git_ignore_with_supplied_ignores
-    Munkey.clone('ftp://user:pass@test.server/', @gitdir, '*.txt')
+    Munkey.clone('ftp://user:pass@test.server/', @gitdir, :ignores => '*.txt')
     assert File.exist?(File.join(@gitdir, '.gitignore'))
     assert_equal "*.txt", File.read(File.join(@gitdir, '.gitignore'))
   end

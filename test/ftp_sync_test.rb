@@ -37,7 +37,7 @@ class FtpSyncTest < Test::Unit::TestCase
   end
   
   def test_setting_an_ignore_object    
-    ftp = FtpSync.new('localhost', 'user', 'pass', Ignore.new)
+    ftp = FtpSync.new('localhost', 'user', 'pass', { :ignore => Ignore.new })
     assert ftp.should_ignore?('ignore')
     assert !ftp.should_ignore?('something')
   end  
