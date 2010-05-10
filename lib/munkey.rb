@@ -28,14 +28,15 @@ class Munkey
           end
           system("cd #{repo_path} && git add .gitignore")
         end
-        new(repo_path)
+        new(repo_path, options)
       end
   end
   
-  def initialize(gitpath)
+  def initialize(gitpath, options)
     @gitpath = gitpath
     munkey_file = File.join(gitpath, '.git', 'munkey.yml')
     @ftpdetails = YAML.load_file(munkey_file) if File.exist?(munkey_file)
+    @verbose = options[:verbose] || false
   end
   
   def pull
@@ -66,11 +67,11 @@ class Munkey
   def pull_ftp_files(dst = nil)
     dst ||= @gitpath
     gitignore = GitignoreParser.parse(dst)
-    ftp = FtpSync.new(@ftpdetails[:host], @ftpdetails[:user], @ftpdetails[:password], :ignore => gitignore)
+    ftp = FtpSync.new(@ftpdetails[:host], @ftpdetails[:user], @ftpdetails[:password], :ignore => gitignore, :verbose => @verbose)
     ftp.pull_dir(dst, @ftpdetails[:path], { :delete => true }) do |p|
       Dir.chdir(dst) do
         relpath = p.gsub %r{^#{Regexp.escape(dst)}\/}, ''
-        system("git rm -r '#{relpath}'")
+        system("git rm -r#{git_quiet} '#{relpath}'")
       end
     end  
   end
@@ -89,13 +90,13 @@ class Munkey
   
   def clone_to_tmp(branch = DEFAULT_BRANCH)
     tmp_repo = File.join ENV['TMPDIR'], create_tmpname
-    system("git clone -b #{branch} #{@gitpath} #{tmp_repo}")
+    system("git clone#{git_quiet} -b #{branch} #{@gitpath} #{tmp_repo}")
     tmp_repo
   end
   
   def push_into_base_repo(tmp_repo, branch = DEFAULT_BRANCH)
     Dir.chdir(tmp_repo) do
-      system("git push origin #{branch}:#{branch}")
+      system("git push#{git_quiet} origin #{branch}:#{branch}")
     end
   end
   
@@ -107,7 +108,7 @@ class Munkey
   
   def merge_pushed_changes(tmp_repo)
     Dir.chdir(tmp_repo) do
-      system("git pull origin master")
+      system("git pull#{git_quiet} origin master")
     end
   end
   
@@ -128,7 +129,7 @@ class Munkey
   end
   
   def update_ftp_server(changes)
-    ftp = FtpSync.new(@ftpdetails[:host], @ftpdetails[:user], @ftpdetails[:password])
+    ftp = FtpSync.new(@ftpdetails[:host], @ftpdetails[:user], @ftpdetails[:password], :verbose => @verbose)
 
     unless changes[:changed].size == 0
       ftp.push_files @gitpath, @ftpdetails[:path], changes[:changed]
@@ -140,6 +141,10 @@ class Munkey
   end
   
   private
+  
+    def git_quiet
+      @verbose ? '' : ' -q'
+    end
   
     def create_tmpname
       tmpname = ''

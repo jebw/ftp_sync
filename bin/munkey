@@ -3,23 +3,27 @@ require 'rubygems'
 require 'munkey'
 
 class MunkeyBin
+  def initialize(args)
+    @options = {}
+    @options[:verbose] = args.delete('--verbose') || false
+  end
+  
   def clone(args)
-    options = {}
-    options[:ignores] = read_ignores(args.shift) if /^--ignore=/ =~ args.first
+    ignores = read_ignores(args.shift) if /^--ignore=/ =~ args.first
     src = args.shift
     dst = args.shift
     dst ||= join_to_pwd(src.split('/').last) if src
     dst = join_to_pwd(dst) unless dst.slice(0, 1) == '/'
     show_help unless src && dst
-    Munkey::clone(src, dst, options)
+    Munkey::clone src, dst, @options.merge(:ignores => ignores)
   end
   
   def pull(args)
-    Munkey.new(Dir.pwd).pull
+    Munkey.new(Dir.pwd, @options).pull
   end
   
   def push(args)
-    Munkey.new(Dir.pwd).push
+    Munkey.new(Dir.pwd, @options).push
   end
   
   def show_help

@@ -4,7 +4,6 @@ FTP Sync
 
 Munkey
 * Add no-merge option to pull
-* Add verbose option to command line program
 * Document code with RDoc
 
 General
