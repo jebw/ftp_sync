@@ -19,7 +19,8 @@ class MunkeyBin
   end
   
   def pull(args)
-    Munkey.new(Dir.pwd, @options).pull
+    merge = args.delete('--no-merge') ? false : true
+    Munkey.new(Dir.pwd, @options).pull(merge)
   end
   
   def push(args)

@@ -100,6 +100,18 @@ class MunkeyTest < Test::Unit::TestCase
     end
   end
   
+  def test_pull_with_no_merge_commits_to_munkey_branch_but_not_master
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    Dir.chdir(@gitdir) do
+      munkey_commits = `git log --format=oneline munkey`.strip.split("\n").size
+      master_commits = `git log --format=oneline master`.strip.split("\n").size
+      FileUtils.touch File.join(Net::FTP.ftp_src, 'missing')
+      munkey.pull(false)
+      assert_equal munkey_commits + 1, `git log --format=oneline munkey`.strip.split("\n").size
+      assert_equal master_commits, `git log --format=oneline master`.strip.split("\n").size
+    end    
+  end
+  
   def test_push_includes_newly_added_files
     Net::FTP.create_ftp_dst
     munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)

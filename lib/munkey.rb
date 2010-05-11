@@ -39,13 +39,13 @@ class Munkey
     @verbose = options[:verbose] || false
   end
   
-  def pull
+  def pull(merge = true)
     tmp_repo = clone_to_tmp
     pull_ftp_files(tmp_repo)
     commit_changes(tmp_repo)
     push_into_base_repo(tmp_repo)
     FileUtils.rm_rf(tmp_repo)
-    merge_foreign_changes
+    merge_foreign_changes if merge
   end
   
   def push
