@@ -160,6 +160,7 @@ class MunkeyTest < Test::Unit::TestCase
     File.open(File.join(@gitdir, 'README'), 'w') do |f|
       f.write "line 1\nline two\nline 3\nline 4\n"
     end
+    Dir.chdir(@gitdir) { `git commit -m 'local changes' README` }
     munkey.pull
     munkey.push
     assert File.exist?(File.join(Net::FTP.ftp_dst, 'README'))
@@ -210,6 +211,11 @@ class MunkeyTest < Test::Unit::TestCase
     end
   end
   
+  def test_latest_commit
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    assert_match /^[a-z0-9]{40}$/, munkey.latest_commit('munkey')
+  end
+  
   protected
    def create_tmpname
     tmpname = ''
@@ -218,10 +224,14 @@ class MunkeyTest < Test::Unit::TestCase
 		return tmpname
   end
   
-  def add_file_to_git(filename, content = nil)
+  def add_file_to_git(filename, content = 'foobar')
     Dir.chdir(@gitdir) do
-      File.open(filename, 'a') {|f| f.write content }      
+      touch filename, content
       system("git add . && git commit -m 'Added file #{filename}'")
     end
+  end
+  
+  def touch(filename, content = 'foobar')
+    File.open(filename, 'a') {|f| f.write content }
   end
 end

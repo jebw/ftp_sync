@@ -49,12 +49,12 @@ class Munkey
   end
   
   def push
-    changes = files_changed_between_branches
-    update_ftp_server(changes)
+    munkey_head = latest_commit('munkey')
     tmp_repo = clone_to_tmp
     merge_pushed_changes(tmp_repo)
     push_into_base_repo(tmp_repo)
     FileUtils.rm_rf(tmp_repo)
+    update_ftp_server files_changed_by_commit(munkey_head, 'munkey')
   end
   
   def save_ftp_details(ftp_uri)
@@ -112,6 +112,21 @@ class Munkey
     end
   end
   
+  def files_changed_by_commit(from = "#{DEFAULT_BRANCH}~1", to = DEFAULT_BRANCH)
+    changes = { :changed => [], :removed => [] }
+    Dir.chdir(@gitpath) do
+      `git diff --name-status #{from} #{to}`.strip.split("\n").each do |f|
+        status, name = f.split(/\s+/, 2)
+        if status == "D"
+          changes[:removed] << name
+        else
+          changes[:changed] << name
+        end
+      end
+    end
+    changes
+  end
+  
   def files_changed_between_branches(branch = DEFAULT_BRANCH)
     changes = { :changed => [], :removed => [] }
     Dir.chdir(@gitpath) do
@@ -138,6 +153,10 @@ class Munkey
     unless changes[:removed].size == 0
       ftp.remove_files @ftpdetails[:path], changes[:removed]
     end
+  end
+  
+  def latest_commit(branch = DEFAULT_BRANCH)
+    File.read(File.join(@gitpath, '.git', 'refs', 'heads', branch)).strip
   end
   
   private
