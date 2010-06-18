@@ -24,7 +24,9 @@ class MunkeyBin
   end
   
   def push(args)
-    Munkey.new(Dir.pwd, @options).push
+    skippush = args.delete('--skip-push') ? false : true
+    dryrun = args.delete('--dry-run') ? true : false
+    Munkey.new(Dir.pwd, @options).push(:skippush => skippush, :dryrun => dryrun)
   end
   
   def show_help

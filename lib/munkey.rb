@@ -48,13 +48,19 @@ class Munkey
     merge_foreign_changes if merge
   end
   
-  def push
+  def push(options = {})
     munkey_head = latest_commit('munkey')
     tmp_repo = clone_to_tmp
     merge_pushed_changes(tmp_repo)
     push_into_base_repo(tmp_repo)
     FileUtils.rm_rf(tmp_repo)
-    update_ftp_server files_changed_by_commit(munkey_head, 'munkey')
+    return if options[:skippush]
+    
+    if options[:dryrun]
+      list_ftp_changes files_changed_by_commit(munkey_head, 'munkey')
+    else
+      update_ftp_server files_changed_by_commit(munkey_head, 'munkey')
+    end
   end
   
   def save_ftp_details(ftp_uri)
@@ -153,6 +159,11 @@ class Munkey
     unless changes[:removed].size == 0
       ftp.remove_files @ftpdetails[:path], changes[:removed]
     end
+  end
+  
+  def list_ftp_changes(changes)
+    changes[:changed].each {|f| puts "WILL UPLOAD #{f}" }
+    changes[:removed].each {|f| puts "WILL REMOVE #{f}" }
   end
   
   def latest_commit(branch = DEFAULT_BRANCH)

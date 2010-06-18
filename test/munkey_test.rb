@@ -211,6 +211,30 @@ class MunkeyTest < Test::Unit::TestCase
     end
   end
   
+  def test_push_with_skip_push
+    Net::FTP.create_ftp_dst
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    add_file_to_git 'newfile'
+    munkey.push :skippush => true
+    Dir.chdir(@gitdir) do
+      commits = `git log --format=oneline munkey`.strip.split("\n")
+      assert_equal 2, commits.size
+    end
+    assert !File.exist?(File.join(Net::FTP.ftp_dst, 'newfile'))
+  end
+  
+  def test_push_with_dry_run
+    Net::FTP.create_ftp_dst
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    add_file_to_git 'newfile'
+    munkey.push :dryrun => true
+    Dir.chdir(@gitdir) do
+      commits = `git log --format=oneline munkey`.strip.split("\n")
+      assert_equal 2, commits.size
+    end
+    assert !File.exist?(File.join(Net::FTP.ftp_dst, 'newfile'))
+  end
+  
   def test_latest_commit
     munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
     assert_match /^[a-z0-9]{40}$/, munkey.latest_commit('munkey')
