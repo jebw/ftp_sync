@@ -5,7 +5,7 @@ require 'munkey'
 class MunkeyBin
   def initialize(args)
     @options = {}
-    @options[:verbose] = args.delete('--verbose') ? true : false
+    @options[:verbose] = args.delete('--quiet') ? false : true
   end
   
   def clone(args)
@@ -24,7 +24,8 @@ class MunkeyBin
   end
   
   def push(args)
-    Munkey.new(Dir.pwd, @options).push
+    dryrun = args.delete('--dry-run') ? true : false
+    Munkey.new(Dir.pwd, @options).push(dryrun)
   end
   
   def show_help
