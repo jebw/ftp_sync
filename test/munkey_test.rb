@@ -148,6 +148,14 @@ class MunkeyTest < Test::Unit::TestCase
     assert !File.exist?(File.join(Net::FTP.ftp_dst, 'README'))
   end
   
+  def test_push_excludes_gitignore
+    Net::FTP.create_ftp_dst
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    add_file_to_git '.gitignore'
+    munkey.push
+    assert !File.exist?(File.join(Net::FTP.ftp_dst, '.gitignore'))
+  end
+  
   def test_push_includes_files_changed_on_both_local_and_remote
     Net::FTP.create_ftp_dst
     File.open(File.join(Net::FTP.ftp_src, 'README'), 'w') do |f| 

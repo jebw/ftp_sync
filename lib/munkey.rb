@@ -123,7 +123,7 @@ class Munkey
         if status == "D"
           changes[:removed] << name
         else
-          changes[:changed] << name
+          changes[:changed] << name unless name == '.gitignore'
         end
       end
     end

@@ -3,8 +3,8 @@ FTP Sync
 * Add optimised pull that avoids old files with unchanged file sizes
 
 Munkey
-* Add no-merge option to pull
 * Document code with RDoc
+* Push should take account of gitignore'd files
 
 General
 * Make tests run outside of TextMate (load path issues)
