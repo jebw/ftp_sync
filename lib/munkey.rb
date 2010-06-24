@@ -48,8 +48,11 @@ class Munkey
     merge_foreign_changes if merge
   end
   
-  def push
+  def push(dryrun = false)
     changes = files_changed_between_branches
+    
+    list_ftp_changes(changes) && return if dryrun
+    
     update_ftp_server(changes)
     tmp_repo = clone_to_tmp
     merge_pushed_changes(tmp_repo)
@@ -138,6 +141,11 @@ class Munkey
     unless changes[:removed].size == 0
       ftp.remove_files @ftpdetails[:path], changes[:removed]
     end
+  end
+  
+  def list_ftp_changes(changes)
+    changes[:changed].each {|f| puts "WILL UPLOAD #{f}" }
+    changes[:removed].each {|f| puts "WILL REMOVE #{f}" }
   end
   
   private

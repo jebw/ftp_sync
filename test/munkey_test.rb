@@ -10,7 +10,7 @@ class MunkeyTest < Test::Unit::TestCase
   end
   
   def teardown
-#    FileUtils.rm_rf @gitdir
+    FileUtils.rm_rf @gitdir
     FileUtils.rm_rf Net::FTP.ftp_src
     FileUtils.rm_rf Net::FTP.ftp_dst if File.exist?(Net::FTP.ftp_dst)
   end
@@ -208,6 +208,23 @@ class MunkeyTest < Test::Unit::TestCase
       commits = `git log --format=oneline munkey`.strip.split("\n")
       assert_equal 3, commits.size
     end
+  end
+  
+  def test_dryrun_push_doesnt_create_commit_in_munkey_branch
+    Net::FTP.create_ftp_dst
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    last_commit = File.read File.join(@gitdir, '.git', 'refs', 'heads', 'munkey')
+    add_file_to_git 'newfile'
+    munkey.push(true)
+    assert_equal last_commit, File.read(File.join(@gitdir, '.git', 'refs', 'heads', 'munkey'))
+  end
+  
+  def test_dryrun_push_doesnt_upload_files
+    Net::FTP.create_ftp_dst
+    munkey = Munkey.clone('ftp://user:pass@test.server/', @gitdir)
+    add_file_to_git 'newfile'
+    munkey.push(true)
+    assert !File.exist?(File.join(Net::FTP.ftp_dst, 'newfile'))
   end
   
   protected
