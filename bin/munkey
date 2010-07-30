@@ -31,11 +31,11 @@ class MunkeyBin
   def show_help
     puts "Usage: munkey <command> [options] [args]"
     puts
-    puts "munkey clone [--ignore=ignoresfile] ftp://usr:pwd@host/dir [dst]"
+    puts "munkey clone [--quiet] [--ignore=ignoresfile] ftp://usr:pwd@host/dir [dst]"
     puts "\t- Clone from FTP source"
-    puts "munkey pull [--no-merge]"
+    puts "munkey pull [--quiet] [--no-merge]"
     puts "\t- Pull in changes from FTP source"
-    puts "munkey push"
+    puts "munkey push [--quiet]  [--dry-run]"
     puts "\t- Push your changes back to FTP source"
     exit
   end
