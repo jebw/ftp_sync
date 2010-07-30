@@ -3,6 +3,7 @@ require 'test/unit'
 require 'net/ftp'
 require 'ftp_sync'
 require 'tmpdir'
+require 'fileutils'
 
 class Ignore
   def ignore?(p); p == 'ignore' ? true : false; end

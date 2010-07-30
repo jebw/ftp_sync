@@ -1,6 +1,7 @@
 require 'test/unit'
 require 'tmpdir'
 require 'munkey'
+require 'fileutils'
 
 class MunkeyTest < Test::Unit::TestCase
   

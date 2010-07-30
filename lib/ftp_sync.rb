@@ -1,6 +1,7 @@
 require 'net/ftp'
 require 'rubygems'
 require 'net/ftp/list'
+require 'fileutils'
 
 class FtpSync
   attr_accessor :verbose, :server, :user, :password

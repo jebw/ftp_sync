@@ -2,6 +2,7 @@ require 'uri'
 require 'ftp_sync'
 require 'yaml'
 require 'gitignore_parser'
+require 'fileutils'
 
 class Munkey
   DEFAULT_BRANCH = 'munkey'
