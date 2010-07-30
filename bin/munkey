@@ -55,7 +55,7 @@ munkey = MunkeyBin.new(ARGV)
 if !ARGV.empty? and munkey.respond_to?(cmd = ARGV.shift)
   begin
     munkey.send cmd, ARGV
-  rescue
+  rescue NoMethodError
     puts "WARNING: Invalid FTP Source"
   end
 else

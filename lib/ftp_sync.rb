@@ -117,7 +117,11 @@ class FtpSync
     connect!
     
     filelist.each do |f| 
-      @connection.delete "#{basepath}/#{f}".gsub(/\/+/, '/')
+      begin
+        @connection.delete "#{basepath}/#{f}".gsub(/\/+/, '/') 
+      rescue Net::FTPPermError => e
+        raise e unless /^550/ =~ e.message
+      end
     end
     
     close!

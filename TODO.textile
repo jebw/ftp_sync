@@ -4,7 +4,6 @@ FTP Sync
 
 Munkey
 * Document code with RDoc
-* Push should take account of gitignore'd files
 
 General
 * Make tests run outside of TextMate (load path issues)
