@@ -120,6 +120,7 @@ class FtpSync
     filelist.each do |f| 
       begin
         @connection.delete "#{basepath}/#{f}".gsub(/\/+/, '/') 
+        log "Removed file #{basepath}/#{f}"
       rescue Net::FTPPermError => e
         raise e unless /^550/ =~ e.message
       end
