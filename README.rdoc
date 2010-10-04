@@ -1,28 +1,12 @@
-= Munkey
+= FtpSync
 
-Uses git to mirror an ftp server and track local changes. These can then be
-pushed back up to the ftp server or additional changes pulled down from the
-ftp server.
+A Ruby library for recursively downloading and uploading directories to/from ftp
+servers. Also supports uploading and downloading a list of files relative to 
+the local/remote roots. You can specify a timestamp to only download files 
+newer than that timestamp.
 
-Solves my problem of working on a website locally but needing to interact
-with other developers editing directly the server via ftp.
+This was originally written to provide the functionality I needed for Munkey,
+a tool for tracking changes on FTP servers with git.
 
-This is not very efficient yet since it downloads all the (non-.gitignore'd) 
-files each time.
-
-Note: Depends on net-ftp-list gem so be sure to install that as well
-
-== Usage
-
-munkey clone [--ignore=ignoresfile] ftp://usr:pwd@host/dir [dst]
-
-munkey pull [--no-merge] - pulls in new changes from ftp
-
-munkey push - pushes changes back into ftp server. Important to have pulled
-              recent changes from ftp since munkey will overwrite locally
-              modified files.
-
-== Caveats
-
-* Gitignore support doesn't understand inverse (!...) lines -- patches welcome
-* Probably doesn't work on Windows (or any non-unix platform)
+Allows you to supply a 'ignore' class that dictates whether a file is excluded
+from upload / download.
