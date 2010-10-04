@@ -120,6 +120,29 @@ class FtpSyncTest < Test::Unit::TestCase
     assert File.exist?(File.join(@local, 'README'))
   end
   
+  def test_quick_pull_of_file_older_than_change_date
+    @ftp.pull_dir(@local, '/')
+    sleep(6)
+    @ftp.pull_dir(@local, '/', :since => Time.now - 3)
+    assert File.mtime(File.join(@local, 'README')) < (Time.now - 3)
+  end
+  
+  def test_quick_pull_of_file_newer_than_change_date
+    @ftp.pull_dir(@local, '/')
+    sleep(6)
+    FileUtils.touch(File.join(Net::FTP.ftp_src, 'README'))
+    @ftp.pull_dir(@local, '/', :since => Time.now - 10)
+    assert File.mtime(File.join(@local, 'README')) > (Time.now - 1)
+  end
+  
+  def test_quick_pull_of_file_older_than_change_date_with_incorrect_file_size
+    @ftp.pull_dir(@local, '/')
+    File.open(File.join(Net::FTP.ftp_src, 'README'), 'w') {|f| f.write 'sampletext' }
+    sleep(6)
+    @ftp.pull_dir(@local, '/', :since => Time.now - 3)
+    assert File.read(File.join(@local, 'README')) =~ /sampletext/
+  end
+  
   def test_pushing_files
     Net::FTP.create_ftp_dst
     FileUtils.touch(File.join(@local, 'localA'))
