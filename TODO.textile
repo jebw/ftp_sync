@@ -1,10 +1,2 @@
-FTP Sync
 * Document code with RDoc
-* Add optimised pull that avoids old files with unchanged file sizes
-
-Munkey
-* Document code with RDoc
-
-General
 * Make tests run outside of TextMate (load path issues)
-* Make tests run quieter
