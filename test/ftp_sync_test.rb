@@ -13,6 +13,7 @@ class FtpSyncTest < Test::Unit::TestCase
   
   def setup
     Net::FTP.create_ftp_src
+    Net::FTP.listing_overrides = {}
     @local = File.join Dir.tmpdir, create_tmpname
     FileUtils.mkdir_p @local
     @ftp = FtpSync.new('test.server', 'user', 'pass')
@@ -122,25 +123,42 @@ class FtpSyncTest < Test::Unit::TestCase
   
   def test_quick_pull_of_file_older_than_change_date
     @ftp.pull_dir(@local, '/')
-    sleep(6)
-    @ftp.pull_dir(@local, '/', :since => Time.now - 3)
-    assert File.mtime(File.join(@local, 'README')) < (Time.now - 3)
+    File.open(File.join(Net::FTP.ftp_src, 'README'), 'w') {|f| f.write 'quicktest' }
+    Net::FTP.listing_overrides['/'] = ["-rw-r--r--   1 root     other         0 #{(Time.now - 600).strftime('%b %d %H:%M')} README"]    
+    @ftp.pull_dir(@local, '/', :since => Time.now - 120)
+    assert_no_match /quicktest/, File.read(File.join(@local, 'README'))
   end
   
   def test_quick_pull_of_file_newer_than_change_date
     @ftp.pull_dir(@local, '/')
-    sleep(6)
-    FileUtils.touch(File.join(Net::FTP.ftp_src, 'README'))
-    @ftp.pull_dir(@local, '/', :since => Time.now - 10)
-    assert File.mtime(File.join(@local, 'README')) > (Time.now - 1)
+    File.open(File.join(Net::FTP.ftp_src, 'README'), 'w') {|f| f.write 'quicktest' }
+    Net::FTP.listing_overrides['/'] = ["-rw-r--r--   1 root     other          0 #{(Time.now - 30).strftime('%b %d %H:%M')} README"]
+    @ftp.pull_dir(@local, '/', :since => Time.now - 120)
+    assert_match /quicktest/, File.read(File.join(@local, 'README'))
   end
   
   def test_quick_pull_of_file_older_than_change_date_with_incorrect_file_size
     @ftp.pull_dir(@local, '/')
-    File.open(File.join(Net::FTP.ftp_src, 'README'), 'w') {|f| f.write 'sampletext' }
-    sleep(6)
-    @ftp.pull_dir(@local, '/', :since => Time.now - 3)
-    assert File.read(File.join(@local, 'README')) =~ /sampletext/
+    File.open(File.join(Net::FTP.ftp_src, 'README'), 'w') {|f| f.write 'quicktest' }
+    Net::FTP.listing_overrides['/'] = ["-rw-r--r--   1 root     other          9 #{(Time.now - 600).strftime('%b %d %H:%M')} README"]
+    @ftp.pull_dir(@local, '/', :since => Time.now - 120)
+    assert_match /quicktest/, File.read(File.join(@local, 'README'))
+  end
+  
+  def test_quick_pull_of_file_older_than_dst_file
+    @ftp.pull_dir(@local, '/')
+    File.open(File.join(Net::FTP.ftp_src, 'README'), 'w') {|f| f.write 'quicktest' }
+    Net::FTP.listing_overrides['/'] = ["-rw-r--r--   1 root     other          0 #{(Time.now - 90).strftime('%b %d %H:%M')} README"]
+    @ftp.pull_dir(@local, '/', :since => :src)
+    assert_no_match /quicktest/, File.read(File.join(@local, 'README'))
+  end
+  
+  def test_quick_pull_of_file_newer_than_dst_file
+    @ftp.pull_dir(@local, '/')
+    File.open(File.join(Net::FTP.ftp_src, 'README'), 'w') {|f| f.write 'quicktest' }
+    Net::FTP.listing_overrides['/'] = ["-rw-r--r--   1 root     other          0 #{(Time.now + 90).strftime('%b %d %H:%M')} README"]
+    @ftp.pull_dir(@local, '/', :since => :src)
+    assert_match /quicktest/, File.read(File.join(@local, 'README'))
   end
   
   def test_pushing_files
@@ -176,7 +194,7 @@ class FtpSyncTest < Test::Unit::TestCase
   end
   
   protected
-   def create_tmpname
+    def create_tmpname
       tmpname = ''
       char_list = ("a".."z").to_a + ("0".."9").to_a
 			1.upto(20) { |i| tmpname << char_list[rand(char_list.size)] }

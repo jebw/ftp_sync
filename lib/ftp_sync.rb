@@ -37,7 +37,13 @@ class FtpSync
       if entry.dir?
         recurse << paths
       elsif entry.file?
-        tocopy << paths unless options[:since] and entry.mtime < options[:since] and entry.filesize == File.size(paths[0])
+        if options[:since] == :src
+          tocopy << paths unless entry.mtime < File.mtime(paths[0]) and entry.filesize == File.size(paths[0])
+        elsif options[:since].is_a?(Time)
+          tocopy << paths unless entry.mtime < options[:since] and entry.filesize == File.size(paths[0])
+        else
+          tocopy << paths
+        end
       end
       todelete.delete paths[0]
     end

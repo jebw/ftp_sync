@@ -3,7 +3,7 @@
 A Ruby library for recursively downloading and uploading directories to/from ftp
 servers. Also supports uploading and downloading a list of files relative to 
 the local/remote roots. You can specify a timestamp to only download files 
-newer than that timestamp.
+newer than that timestamp, or only download files newer than their local copy.
 
 This was originally written to provide the functionality I needed for Munkey,
 a tool for tracking changes on FTP servers with git.

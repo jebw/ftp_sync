@@ -2,7 +2,10 @@ require 'tmpdir'
 
 module Net
   class FTP
+    @@listing_overrides = {}
+    
     class << self
+      
       def ftp_src
         @ftp_src ||= File.join(Dir.tmpdir, 'munkey_ftp_src')
       end
@@ -33,6 +36,14 @@ module Net
     
       def create_ftp_dst
         FileUtils.mkdir_p ftp_dst
+      end
+      
+      def listing_overrides
+        @@listing_overrides ||= {}
+      end
+      
+      def listing_overrides=(overrides)
+        @@listing_overrides = overrides
       end
     end
     
@@ -71,7 +82,9 @@ module Net
     end
     
     def list(dir)
-      paths = if File.exist?(src_path(dir))
+      paths = if @@listing_overrides[dir]
+        @@listing_overrides[dir]
+      elsif File.exist?(src_path(dir))
         `ls -l #{src_path(dir)}`.strip.split("\n")
       else
         []
