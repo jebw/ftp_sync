@@ -1,3 +1,9 @@
+test_path = File.expand_path(File.dirname(__FILE__))
+lib_path = File.join(File.expand_path(File.dirname(__FILE__)), '..', 'lib')
+
+$:.unshift test_path unless $:.include?(test_path)
+$:.unshift lib_path unless $:.include?(lib_path)
+
 require 'rubygems'
 require 'test/unit'
 require 'net/ftp'
@@ -192,7 +198,7 @@ class FtpSyncTest < Test::Unit::TestCase
     assert !File.exist?(File.join(Net::FTP.ftp_dst, 'dirB', 'fileB'))
     assert File.exist?(File.join(Net::FTP.ftp_dst, 'fileC'))
   end
-  
+    
   protected
     def create_tmpname
       tmpname = ''
