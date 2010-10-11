@@ -167,6 +167,16 @@ class FtpSyncTest < Test::Unit::TestCase
     assert_match /quicktest/, File.read(File.join(@local, 'README'))
   end
   
+  def test_quick_pull_for_first_download
+    @ftp.pull_dir(@local, '/', :since => true)
+    assert File.exist?(File.join(@local, 'README'))
+  end
+  
+  def test_quick_pull_since_date_for_first_download
+    @ftp.pull_dir(@local, '/', :since => Time.now)
+    assert File.exist?(File.join(@local, 'README'))
+  end
+  
   def test_pushing_files
     Net::FTP.create_ftp_dst
     FileUtils.touch(File.join(@local, 'localA'))

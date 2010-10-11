@@ -3,9 +3,18 @@ require 'rubygems'
 require 'net/ftp/list'
 require 'fileutils'
 
+# A Ruby library for recursively downloading and uploading directories to/from ftp
+# servers. Also supports uploading and downloading a list of files relative to 
+# the local/remote roots. You can specify a timestamp to only download files 
+# newer than that timestamp, or only download files newer than their local copy.
 class FtpSync
+  
   attr_accessor :verbose, :server, :user, :password
   
+  # Creates a new instance for accessing a ftp server 
+  # requires +server+, +user+, and +password+ options
+  # * :ignore - Accepts an instance of class which has an ignore? method, taking a path and returns true or false, for whether to ignore the file or not.
+  # * :verbose - Whether should be verbose
   def initialize(server, user, password, options = {})
     @server = server
     @user = user
@@ -15,6 +24,12 @@ class FtpSync
     @recursion_level = 0
     @verbose = options[:verbose] || false
   end
+  
+  # Recursively pull down files
+  # :since => true - only pull down files newer than their local counterpart, or with a different filesize
+  # :since => Time.now - only pull down files newer than the supplied timestamp, or with a different filesize
+  # :delete => Remove local files which don't exist on the FTP server
+  # If a block is supplied then it will be called to remove a local file
   
   def pull_dir(localpath, remotepath, options = {}, &block)
     connect! unless @connection
@@ -38,9 +53,9 @@ class FtpSync
         recurse << paths
       elsif entry.file?
         if options[:since] == :src
-          tocopy << paths unless entry.mtime < File.mtime(paths[0]) and entry.filesize == File.size(paths[0])
+          tocopy << paths unless File.exist?(paths[0]) and entry.mtime < File.mtime(paths[0]) and entry.filesize == File.size(paths[0])
         elsif options[:since].is_a?(Time)
-          tocopy << paths unless entry.mtime < options[:since] and entry.filesize == File.size(paths[0])
+          tocopy << paths unless entry.mtime < options[:since] and File.exist?(paths[0]) and entry.filesize == File.size(paths[0])
         else
           tocopy << paths
         end
@@ -76,6 +91,7 @@ class FtpSync
     raise Net::FTPPermError
   end
   
+  # Recursively push a local directory of files onto an FTP server
   def push_dir(localpath, remotepath)
     connect!
     
@@ -96,6 +112,7 @@ class FtpSync
     close!
   end
   
+  # Pull a supplied list of files from the remote ftp path into the local path
   def pull_files(localpath, remotepath, filelist)
     connect!
     filelist.each do |f|
@@ -107,6 +124,7 @@ class FtpSync
     close!
   end
   
+  # Push a supplied list of files from the local path into the remote ftp path
   def push_files(localpath, remotepath, filelist)
     connect!
     
@@ -120,6 +138,7 @@ class FtpSync
     close!
   end
   
+  # Remove listed files from the FTP server
   def remove_files(basepath, filelist)
     connect!
     
@@ -135,6 +154,7 @@ class FtpSync
     close!
   end
   
+  # Chains off to the (if supplied) Ignore class, ie GitIgnores.new.ignore?('path/to/my/file')
   def should_ignore?(path)
     @ignore && @ignore.ignore?(path)
   end

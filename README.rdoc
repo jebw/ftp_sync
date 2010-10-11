@@ -10,3 +10,15 @@ a tool for tracking changes on FTP servers with git.
 
 Allows you to supply a 'ignore' class that dictates whether a file is excluded
 from upload / download.
+
+== Quickstart
+
+ ftp = FtpSync.new 'my.ftp.server.com', 'username', 'password'
+ ftp.pull_dir '/tmp/syncdir', 'path/on/server'
+
+make some changes on server
+
+ ftp.pull_dir '/tmp/syncdir', 'path/on/server', :since => true, :delete => true
+
+ :since => true - means only files which are newer than the local copy will be downloaded
+ :delete => true - means if the file is removed from the server, then the local copy is removed
