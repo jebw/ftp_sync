@@ -125,6 +125,26 @@ class FtpSyncTest < Test::Unit::TestCase
     FileUtils.rm_r File.join(Net::FTP.ftp_src, 'README')
     @ftp.pull_dir(@local, '/')
     assert File.exist?(File.join(@local, 'README'))
+  end  
+  
+  def test_pulling_with_permissions_error_fails
+    FileUtils.chmod 0200, File.join(Net::FTP.ftp_src, 'fileA')
+    assert_raises Net::FTPPermError do
+      @ftp.pull_dir(@local, '/')
+    end
+    assert File.exist?(File.join(@local, 'README'))
+    assert !File.exist?(File.join(@local, 'fileA'))
+    assert !File.exist?(File.join(@local, 'fileB'))
+  end
+  
+  def test_pulling_with_permissions_error_continues
+    FileUtils.chmod 0200, File.join(Net::FTP.ftp_src, 'fileA')
+    assert_nothing_raised do
+      @ftp.pull_dir(@local, '/', :skip_errors => true)
+    end
+    assert File.exist?(File.join(@local, 'README'))
+    assert !File.exist?(File.join(@local, 'fileA'))
+    assert File.exist?(File.join(@local, 'fileB'))
   end
   
   def test_quick_pull_of_file_older_than_change_date

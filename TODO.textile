@@ -1,2 +1,1 @@
 * Document code with RDoc
-* Make tests run outside of TextMate (load path issues)

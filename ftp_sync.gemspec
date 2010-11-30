@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec| 
   spec.name = "ftp_sync"
-  spec.version = "0.4.1"
+  spec.version = "0.4.2"
   spec.summary = "Library for syncing files and dirs with ftp servers"
   spec.description = "Library for recursively downloading and uploading entire directories from FTP servers. "
   spec.description << "Supports 'quick' downloads pulling only files changed since a specified date and uploading downloading lists of files. "

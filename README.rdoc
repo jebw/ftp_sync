@@ -21,4 +21,6 @@ make some changes on server
  ftp.pull_dir '/tmp/syncdir', 'path/on/server', :since => true, :delete => true
 
  :since => true - means only files which are newer than the local copy will be downloaded
+ :since => Time.now - means only files which are newer than the supplied date will be downloaded
  :delete => true - means if the file is removed from the server, then the local copy is removed
+ :skip_errors => true - means if file cant be read (ie permissions) it will be skipped

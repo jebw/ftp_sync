@@ -66,8 +66,13 @@ class FtpSync
     tocopy.each do |paths|
       localfile, remotefile = paths
       unless should_ignore?(localfile)
-        @connection.get(remotefile, localfile)
-        log "Pulled file #{remotefile}"
+        begin
+          @connection.get(remotefile, localfile)
+          log "Pulled file #{remotefile}"
+        rescue Net::FTPPermError
+          log "ERROR READING #{remotefile}"
+          raise Net::FTPPermError unless options[:skip_errors]
+        end        
       end
     end
     

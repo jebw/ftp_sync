@@ -61,7 +61,10 @@ module Net
     
     def get(src, dst)
       raise Net::FTPPermError unless File.exist?(src_path(src))
+      File.read(src_path(src))
       FileUtils.cp src_path(src), dst
+    rescue Errno::EACCES
+      raise Net::FTPPermError
     end
     
     def put(src, dst)
