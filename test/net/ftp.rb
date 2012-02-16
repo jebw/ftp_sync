@@ -5,7 +5,7 @@ module Net
     @@listing_overrides = {}
     
     class << self
-      
+
       def ftp_src
         @ftp_src ||= File.join(Dir.tmpdir, 'munkey_ftp_src')
       end
@@ -104,6 +104,14 @@ module Net
     
     def close; end
     
+    def passive
+      @passive ||= false
+    end
+    
+    def passive=(val)
+      @passive = val
+    end
+
     private
       def src_path(p)
         File.join(self.class.ftp_src, p)
