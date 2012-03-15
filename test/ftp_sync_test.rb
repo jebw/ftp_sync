@@ -36,12 +36,25 @@ class FtpSyncTest < Test::Unit::TestCase
     assert_equal 'user', @ftp.user
     assert_equal 'pass', @ftp.password
   end
+
+  def test_can_initialize_with_params_and_options
+    assert_equal false, @ftp.passive
+    @ftp = FtpSync.new('test.server', 'user', 'pass', :passive => true)
+    assert_equal true, @ftp.passive
+  end
   
   def test_can_set_verbose
     @ftp.verbose = true
     assert_equal true, @ftp.verbose
     @ftp.verbose = false
     assert_equal false, @ftp.verbose  
+  end
+
+  def test_can_set_passive
+    @ftp.passive = true
+    assert_equal true, @ftp.passive
+    @ftp.passive = false
+    assert_equal false, @ftp.passive  
   end
   
   def test_setting_an_ignore_object    
